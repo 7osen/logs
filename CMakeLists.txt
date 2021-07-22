@@ -3,7 +3,16 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
+
 # 将源代码添加到此项目的可执行文件。
-add_executable (LogServer "LogServer.cpp" "LogServer.hpp" "base/memkv.hpp" "base/skiplist.hpp" "base/timecount.hpp" "base/logfile.hpp" "base/kv.hpp" "base/setting.hpp" "net/Channel.hpp" "net/CellServer.hpp" "net/Epoller.hpp")
+add_executable (LogServer "LogServer.cpp" "LogServer.hpp" "base/memkv.hpp" "base/skiplist.hpp" "base/timecount.hpp" "base/logfile.hpp" "base/kv.hpp" "base/setting.hpp" "net/Channel.hpp" "net/CellServer.hpp" "net/Epoller.hpp" "net/TcpConnection.hpp" "base/buffer.hpp" "net/TcpServer.hpp")
+
+target_link_libraries(LogServer Threads::Threads)
 
 # TODO: 如有需要，请添加测试并安装目标。
