@@ -5,24 +5,24 @@
 #include "LogServer.hpp"
 #include "base/timecount.hpp"
 #include "base/kv.hpp"
-#include "net/CellServer.hpp"
-#include "net/TcpServer.hpp"
+#include "net/HttpServer.hpp"
 #include <sstream>
 #include <iostream>
 #include <fstream> 
 #include <thread>
+
 using namespace std;
 
-void Onmessage(Channel* conn, Buffer* buf)
+void print(char* begin, char* end)
 {
-	cout << buf->getData() << endl;
+	cout << string(begin, end) << endl;
 }
 
 void run()
 {
 
-	TcpServer s(9999);
-	s.setMessageCallBack(std::bind(Onmessage, std::placeholders::_1, std::placeholders::_2));
+	HttpServer s(8000);
+	s.setOnMessageCallBack(bind(print,placeholders::_1,placeholders::_2));
 	s.start();
 }
 

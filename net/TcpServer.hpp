@@ -20,7 +20,11 @@ public:
 
 	~TcpServer()
 	{
-
+		for (int i = 0; i < _threadnum; i++)
+		{
+			_servers[i]->close();
+		}
+		close(_fd);
 	}
 
 	void setMessageCallBack(const MessageCallBack& cb)

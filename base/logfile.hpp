@@ -18,6 +18,17 @@ public:
 	{
 		_file.open(filename, ios::in | ios::out | ios::binary | flag);
 	}
+	~Logfile(){}
+
+	void Writeline();
+	void Flush() { _file.flush(); }
+	void SetReadPos(long pos) { _file.seekg(pos); }
+	void SetWritePos(long pos) { _file.seekp(pos); }
+	void ReadWrap() { _file.get(); }
+	void Close() { Flush(); _file.close(); }
+	bool Eof() { return _file.peek() == EOF; }
+	long ReadPos() { return _file.tellg(); }
+	long WritePos() { return _file.tellp(); }
 
 	template<typename T, typename ...Args>
 	void Write(T,Args ...);
@@ -32,59 +43,7 @@ public:
 	void Read(T&);
 
 	template<typename T>
-	ostream& operator << (T t)
-	{
-		return _file << t;
-	}
-
-	void Writeline();
-
-	void Flush()
-	{
-		_file.flush();
-	}
-
-	long WritePos()
-	{
-		return _file.tellp();
-	}
-
-	long ReadPos()
-	{
-		return _file.tellg();
-	}
-
-	void SetWritePos(long pos)
-	{
-		_file.seekp(pos);
-	}
-
-	void SetReadPos(long pos)
-	{
-		_file.seekg(pos);
-	}
-
-	void ReadWrap()
-	{
-		_file.get();
-	}
-
-	void Close()
-	{
-		Flush();
-		_file.close();
-	}
-
-	bool Eof()
-	{
-		return _file.peek() == EOF; 
-	}
-
-	~Logfile()
-	{
-
-	}
-
+	ostream& operator << (T t){return _file << t;}
 private:
 	fstream _file;
 };

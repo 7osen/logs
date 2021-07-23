@@ -11,46 +11,21 @@ class Node
 
 public:
     int node_level;
-
     K key;
-
     V value;
-
     Node<K, V>** _forward;
-
     Node() {}
-
     Node(const K k, const V v, int level)
     {
         this->key = k;
         this->value = v;
         this->node_level = level;
-
         this->_forward = new Node<K, V>*[level + 1];
-
         memset(this->_forward, 0, sizeof(Node<K, V>*) * (level + 1));
     };
 
-    ~Node()
-    {
-        delete[] _forward;
-    }
-
-    Node<K, V>* next()
-    {
-        return _forward[0];
-    }
-
-    Node<K, V>* operator++()
-    {
-        return _forward[0];
-    }
-    Node<K, V>* operator++(int n)
-    {
-        return _forward[0];
-    }
-
-
+    ~Node() { delete[] _forward; }
+    Node<K, V>* next(){return _forward[0];}
 private:
 };
 
@@ -61,31 +36,20 @@ class SkipList
 public:
     SkipList();
     ~SkipList();
-    int get_random_level();
-    Node<K, V>* create_node(K, V, int);
-    int push_back(K, V);
-    Node<K,V>* find(K);
     int size();
-
-    Node<K, V>* begin()
-    {
-        return _header->_forward[0];
-    }
-
-    Node<K, V>* end()
-    {
-        return nullptr;
-    }
+    int push_back(K, V);
+    int get_random_level();
+    Node<K,V>* find(K);
+    Node<K, V>* create_node(K, V, int);
+    Node<K, V>* begin(){return _header->_forward[0];}
+    Node<K, V>* end(){return nullptr;}
 
 
 private:
     int _max_level;
-
     int _skip_list_level;
-
-    Node<K, V>* _header;
-
     int _element_count;
+    Node<K, V>* _header;
 };
 
 template<typename K, typename V>
@@ -182,9 +146,10 @@ int SkipList<K, V>::get_random_level()
 {
 
     int k = 1;
-    while (rand() % 2) {
+    while (rand() % 2)
+    {
         k++;
     }
     k = (k < _max_level) ? k : _max_level;
     return k;
-};
+}

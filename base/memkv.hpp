@@ -73,15 +73,8 @@ public:
 	int _offset;
 	string _context;
 	Value(string context, int offset)
-		:_context(context), _offset(offset)
-	{
-
-	}
-	~Value()
-	{
-
-	}
-
+		:_context(context), _offset(offset){}
+	~Value(){}
 private:
 
 };
@@ -96,28 +89,15 @@ public:
 
 	~Memkv(){}
 
-	long Size()
-	{
-		return _logfile.WritePos();
-	}
-
 	void Set(Key, string);
-
-	int Log(Key, string);
-
-	int Get(Logfile*, string, string);
-
-	int Get(Logfile*, string, string, string);
-
 	void Flush();
-
 	void Close();
-
-	void WriteIndex();
-
 	void Restart();
-
-
+	void WriteIndex();
+	int Log(Key, string);
+	int Get(Logfile*, string, string, string);
+	int Get(Logfile*, string, string);
+	long Size(){return _logfile.WritePos();}
 private:
 	int _num;
 	string _logFilename;

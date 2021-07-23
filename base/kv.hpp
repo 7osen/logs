@@ -11,46 +11,41 @@ public:
 		_logFileNames.emplace_back(_filename + ".log0");
 		_indexFileNames.emplace_back(_filename + ".index0");
 	}
-
 	~Kv(){}
-
-	void Restart()
-	{
-		getFileNum();
-		if (file_exists(_filename + ".index0"))
-		{
-			Roll();
-			_memkv = std::make_shared<Memkv>(_filename);
-		}
-		else _memkv->Restart();
-	}
-
+	void Restart();
 	void Set(string, string, string, string);
-	
 	int Get(string, string);
-
 	int Get(string, string, string);
 	
 private:
+	void Roll();
+	void getFileNum();
+	bool file_exists(const std::string& name);
+	int GetFromFile(Logfile*, string, string, string, string);
+	int find(Logfile*, Logfile*, string, int);
+
 	int _filenum;
 	string _filename;
 	shared_ptr<Memkv> _memkv;
 	vector<string> _logFileNames;
 	vector<string> _indexFileNames;
-
-	bool file_exists(const std::string& name) {
-		struct stat buffer;
-		return (stat(name.c_str(), &buffer) == 0);
-	}
-
-	int GetFromFile(Logfile*, string, string, string, string);
-
-	int find(Logfile*, Logfile*, string, int);
-
-	void Roll();
-
-	void getFileNum();
 };
+
+bool Kv::file_exists(const std::string& name) {
+	struct stat buffer;
+	return (stat(name.c_str(), &buffer) == 0);
+}
+
+void Kv::Restart()
+{
+	getFileNum();
+	if (file_exists(_filename + ".index0"))
+	{
+		Roll();
+		_memkv = std::make_shared<Memkv>(_filename);
+	}
+	else _memkv->Restart();
+}
 
 void Kv::Set(string timestamp, string userid, string topic, string context)
 {
