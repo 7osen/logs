@@ -18,13 +18,12 @@ public:
 	~CellServer(){ delete _thread; }
 	int size(){ return _connectnums;}
 	void close(){ _quit = true;}
-	bool isClosed(){ return _running;}
+	bool isClosed(){ return !_running;}
 	void start();
 	void SetReadCallBack(CallBack& cb){ _ReadCallBack = cb;}
 	void setMessageCallBack(const MessageCallBack& cb){ _MessageCallBack = cb;}
 	void addNewClient(int fd);
 	void RemoveChannel(Channel* channel);
-
 
 private:
 	void Update();

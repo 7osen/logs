@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
 #include <iostream>
 #include "../base/buffer.hpp"
 
@@ -11,6 +12,7 @@ const char Http_Header_End[] = "\r\n\r\n";
 
 using std::string;
 using std::map;
+using std::unordered_map;
 
 char* get_http_header_end(char* begin, char* end)
 {
@@ -59,60 +61,66 @@ public:
 	}
 
 private:
-	void getAttributes()
-	{
-		char* next = std::find(_begin, _end, ':');
-		for (; next != _end; next = std::find(_begin, _end, ':'))
-		{
-			string key(_begin, next);
-			_begin = next + 2;
-			next = std::search(_begin, _end, CRLF, CRLF + 2);
-			string val(_begin, next);
-			_attributes[key] = val;
-			_begin = next + 2;
-		}
-	}
+	void getAttributes();
 
-	void getVersion()
-	{
-		char* next = std::search(_begin, _end, CRLF, CRLF + 2);
-		_attributes["Version"] = string(_begin, next);
-		_begin = next + 2;
-	}
-
-	void getUrl()
-	{
-		char* next = std::find(_begin, _end, ' ');
-		_attributes["Url"] = string(_begin, next);
-		_begin = next + 1;
-	}
-
-	void getMethod()
-	{
-		char* empty = std::find(_begin, _end, ' ');
-		string Method(_begin, empty);
-		if (Method == "GET")
-		{
-			_method = HttpMethod::GET;
-		}
-		else if (Method == "POST")
-		{
-			_method = HttpMethod::POST;
-		}
-		else if (Method == "PUT")
-		{
-			_method = HttpMethod::PUT;
-		}
-		else
-		{
-			_method = HttpMethod::ERROR;
-		}
-		_begin = empty + 1;
-	}
-
+	void getUrl();
+	void getMethod();
+	void getVersion();
 
 	char* _begin;
 	char* _end;
-	map<string, string> _attributes;
+	unordered_map<string, string> _attributes;
 	HttpMethod _method;
 };
+
+
+void httpHeader::getMethod()
+{
+	char* empty = std::find(_begin, _end, ' ');
+	string Method(_begin, empty);
+	if (Method == "GET")
+	{
+		_method = HttpMethod::GET;
+	}
+	else if (Method == "POST")
+	{
+		_method = HttpMethod::POST;
+	}
+	else if (Method == "PUT")
+	{
+		_method = HttpMethod::PUT;
+	}
+	else
+	{
+		_method = HttpMethod::ERROR;
+	}
+	_begin = empty + 1;
+}
+
+void httpHeader::getUrl()
+{
+	char* next = std::find(_begin, _end, ' ');
+	_attributes["Url"] = string(_begin, next);
+	_begin = next + 1;
+}
+
+void httpHeader::getVersion()
+{
+	char* next = std::search(_begin, _end, CRLF, CRLF + 2);
+	_attributes["Version"] = string(_begin, next);
+	_begin = next + 2;
+}
+
+void httpHeader::getAttributes()
+{
+	char* next = std::find(_begin, _end, ':');
+	for (; next != _end; next = std::find(_begin, _end, ':'))
+	{
+		string key(_begin, next);
+		_begin = next + 2;
+		next = std::search(_begin, _end, CRLF, CRLF + 2);
+		string val(_begin, next);
+		_attributes[key] = val;
+		_begin = next + 2;
+	}
+}

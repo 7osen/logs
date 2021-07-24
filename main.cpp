@@ -1,30 +1,23 @@
 ﻿// LogServer.cpp: 定义应用程序的入口点。
 //
 
-#include "base/buffer.hpp"
-#include "LogServer.hpp"
+#include "net/LogServer.hpp"
 #include "base/timecount.hpp"
-#include "base/kv.hpp"
-#include "net/HttpServer.hpp"
-#include <sstream>
-#include <iostream>
-#include <fstream> 
-#include <thread>
-
+#include <bits/stdc++.h>
+#include <atomic>
 using namespace std;
 
 void print(char* begin, char* end)
 {
+	
 	cout << string(begin, end) << endl;
 }
 
 void run()
 {
-
-	HttpServer s(8000);
-	s.setOnMessageCallBack(bind(print,placeholders::_1,placeholders::_2));
+	LogServer s(8001);
 	s.start();
-}
+}	
 
 int main()
 {
@@ -44,4 +37,5 @@ int main()
 	t.detach();
 	char ch;
 	scanf("%c", &ch);
+	
 }	

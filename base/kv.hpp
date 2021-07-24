@@ -2,18 +2,22 @@
 #include "memkv.hpp"
 #include <vector>
 using std::vector;
+
 class Kv
 {
 public:
-	Kv(string filename = "log0")
+	Kv(string filename = "log")
 		:_filenum(1),_filename(Filepath + filename), _memkv(std::make_shared<Memkv>(_filename))
 	{
 		_logFileNames.emplace_back(_filename + ".log0");
 		_indexFileNames.emplace_back(_filename + ".index0");
+
 	}
 	~Kv(){}
 	void Restart();
 	void Set(string, string, string, string);
+	void Set(const message&);
+
 	int Get(string, string);
 	int Get(string, string, string);
 	
@@ -171,4 +175,9 @@ void Kv::getFileNum()
 		}
 		else break;
 	}
+}
+
+void Kv::Set(const message& m)
+{
+	_memkv->Set(m);
 }

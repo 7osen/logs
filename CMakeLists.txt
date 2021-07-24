@@ -12,7 +12,7 @@ find_package(Threads REQUIRED)
 
 
 # 将源代码添加到此项目的可执行文件。
-add_executable (LogServer "LogServer.cpp" "LogServer.hpp" "base/memkv.hpp" "base/skiplist.hpp" "base/timecount.hpp" "base/logfile.hpp" "base/kv.hpp" "base/setting.hpp" "net/Channel.hpp" "net/CellServer.hpp" "net/Epoller.hpp" "net/TcpConnection.hpp" "base/buffer.hpp" "net/TcpServer.hpp" "net/HttpHeader.hpp" "net/HttpServer.hpp")
+add_executable (LogServer "main.cpp"  "base/memkv.hpp" "base/skiplist.hpp" "base/timecount.hpp" "base/logfile.hpp" "base/kv.hpp" "base/setting.hpp" "net/Channel.hpp" "net/CellServer.hpp" "net/Epoller.hpp" "net/TcpConnection.hpp" "base/buffer.hpp" "net/TcpServer.hpp" "net/HttpHeader.hpp" "net/HttpServer.hpp" "net/LogServer.hpp" "base/lock_free_queue.hpp")
 
 target_link_libraries(LogServer Threads::Threads)
 

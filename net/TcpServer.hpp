@@ -20,11 +20,24 @@ public:
 
 	~TcpServer()
 	{
+		close();
+		::close(_fd);
+	}
+
+	void close()
+	{
+		_running = false;
 		for (int i = 0; i < _threadnum; i++)
 		{
 			_servers[i]->close();
 		}
-		close(_fd);
+		for (int i = 0; i < _threadnum; i++)
+		{
+			while (_servers[i]->isClosed())
+			{
+				delete _servers[i];
+			}
+		}
 	}
 
 	void setMessageCallBack(const MessageCallBack& cb)

@@ -5,9 +5,11 @@
 #include <sys/poll.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <string>
 #include "../base/buffer.hpp"
 
 using std::function;
+using std::string;
 
 class Channel
 {

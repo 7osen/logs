@@ -19,6 +19,11 @@ public:
 
 	}
 
+	void close()
+	{
+		_server.close();
+	}
+
 	void start()
 	{
 		_server.start();
@@ -39,7 +44,7 @@ private:
 		for (; end != buf->end(); end = get_http_header_end(buf->begin(), buf->end()))
 		{
 			httpHeader header(begin, end);
-			std::cout << header.method() << std::endl;
+			//std::cout << header.method() << std::endl;
 			end = end + 4;
 			int dataLength = std::stoi(header.get("Content-Length"));
 			if (buf->end() - end >= dataLength)
