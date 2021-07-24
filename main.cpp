@@ -13,18 +13,13 @@ void print(char* begin, char* end)
 	cout << string(begin, end) << endl;
 }
 
-void run()
-{
-	LogServer s(8001);
-	s.start();
-}	
 
 int main()
 {
 	/*string filename = "log0";
 	Kv k(filename);
 	TimeCount t;
-	t.Update();
+	t.Update();1
 	for (int i = 1; i <= 1000000; i++)
 	{
 		k.Set("2323", "1", "2", "value");
@@ -33,9 +28,12 @@ int main()
 	t.Update();
 	cout << k.Get("1", "9999999") << endl;
 	cout << t.getSecond() << endl;*/
-	thread t(run);
+	LogServer s(8000);
+	thread t(&LogServer::start,&s);
 	t.detach();
 	char ch;
 	scanf("%c", &ch);
-	
+	s.find("2012", "2013");
+	scanf("%c", &ch);
+	//s.close();
 }	

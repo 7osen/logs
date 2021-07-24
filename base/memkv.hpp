@@ -12,6 +12,7 @@
 #include "logfile.hpp"
 #include "skiplist.hpp"
 #include "setting.hpp"
+#include "message.hpp"
 
 using std::string;
 using std::vector;
@@ -21,124 +22,6 @@ using std::shared_ptr;
 
 
 static std::stringstream* _ss = new std::stringstream();
-
-class Key
-{
-public:
-
-	string _timestamp;
-	string _userid;
-	string _topic;
-	string _user_time_topic_key;
-	string _time_user_topic_key;
-	Key()
-	{
-	}
-
-	Key(char* timestamp, char* userid, char* topic)
-		:_timestamp(timestamp),_userid(userid),_topic(topic)
-	{
-		*_ss << _userid << "-" << _timestamp << "-" << _topic;
-		_user_time_topic_key = _ss->str();
-		_ss->str("");	
-		*_ss <<  _timestamp << "-" << _userid << "-" << _topic;
-		_time_user_topic_key = _ss->str();
-		_ss->str("");
-	}
-
-	Key(string timestamp, string userid, string topic)
-		:_timestamp(timestamp), _userid(userid), _topic(topic)
-	{
-		*_ss << _userid << "-" << _timestamp << "-" << _topic;
-		_user_time_topic_key = _ss->str();
-		_ss->str("");
-		*_ss << _timestamp << "-" << _userid << "-" << _topic;
-		_time_user_topic_key = _ss->str();
-		_ss->str("");
-	}
-
-	~Key()
-	{
-	}
-};
-
-
-
-
-class Value
-{
-public:
-	int _offset;
-	string _context;
-	Value(string context, int offset)
-		:_context(context), _offset(offset){}
-	~Value(){}
-private:
-
-};
-
-
-class message
-{
-public:
-	message(){}
-
-	message(const char* timestamp,const char* userid,const char* topic,const char* context)
-		:_timestamp(new char[strlen(timestamp)]),
-		_userid(new char[strlen(userid)]),
-		_topic(new char[strlen(topic)]),
-		_context(new char[strlen(context)])
-	{
-		strcpy(_timestamp, timestamp);
-		strcpy(_userid, userid);
-		strcpy(_topic, topic);
-		strcpy(_context, context);
-	}
-
-	message(char* timestamp, int timestamplen,char* userid,int useridlen, char* topic,int topiclen, char* context,int contextlen)
-		:_timestamp(new char[timestamplen]),
-		_userid(new char[useridlen]),
-		_topic(new char[topiclen]),
-		_context(new char[contextlen])
-	{
-		strcpy(_timestamp, timestamp);
-		strcpy(_userid, userid);
-		strcpy(_topic, topic);
-		strcpy(_context, context);
-	}
-
-	message(const message& m)
-		:_timestamp(new char[strlen(m._timestamp)]),
-		_userid(new char[strlen(m._userid)]),
-		_topic(new char[strlen(m._topic)]),
-		_context(new char[strlen(m._context)])
-	{
-		strcpy(_timestamp, m._timestamp);
-		strcpy(_userid, m._userid);
-		strcpy(_topic, m._topic);
-		strcpy(_context, m._context);
-	}
-
-	~message()
-	{
-		delete[] _timestamp;
-		delete[] _userid;
-		delete[] _topic;
-		delete[] _context;
-	}
-
-	bool operator > (const message& m)
-	{
-		int ret = 0;
-		ret = strcmp(_timestamp, m._timestamp);
-
-	}
-
-	char* _timestamp;
-	char* _userid;
-	char* _topic;
-	char* _context;
-};
 
 
 class Memkv
@@ -150,7 +33,6 @@ public:
 
 	~Memkv(){}
 
-	void Set(Key, string);
 	void Set(const message&);
 
 	void Flush();
@@ -158,7 +40,6 @@ public:
 	void Restart();
 	void WriteIndex();
 
-	int Log(Key, string);
 	int Log(const message&);
 
 	int Get(Logfile*, string, string, string);
@@ -169,8 +50,9 @@ private:
 	string _logFilename;
 	string _indexFilename;
 	Logfile _logfile;
-	SkipList<string, shared_ptr<Value> > _timelist;
-	SkipList<string, shared_ptr<Value> > _userlist;
+	vector<int> _indexs;
+	SkipList<message, int> _timelist;
+	SkipList<message, int> _userlist;
 };
 
 void Memkv::Close()
@@ -191,23 +73,12 @@ void Memkv::Restart()
 		int offset = _logfile.WritePos();
 		_logfile.Read(timestamp, userid, topic, context);
 		_logfile.ReadWrap();
-		Key k(timestamp, userid, topic);
-		shared_ptr<Value> v(new Value(context, offset));
-		_timelist.push_back(k._time_user_topic_key, v);
-		_userlist.push_back(k._user_time_topic_key, v);
+		message m(timestamp, userid, topic,context);
+		_timelist.push_back(m, offset);
+		_userlist.push_back(m, offset);
 		_num++;
 	}
 }
-
-int Memkv::Log(Key k, string context)
-{
-	_logfile.Write(k._timestamp,k._userid,k._topic, context);
-	_logfile.Writeline();
-	_logfile.Flush();
-	return 0;
-}
-
-
 
 void Memkv::Flush()
 {
@@ -221,11 +92,15 @@ void Memkv::WriteIndex()
 	indexfile.Write(_num);
 	for (auto it = _timelist.begin(); it != _timelist.end(); it = it->next())
 	{
-		indexfile.Write(it->value->_offset);
+		indexfile.Write(it->value);
+	}
+	for (auto it = _indexs.begin(); it != _indexs.end(); it++)
+	{
+		indexfile.Write(*it);
 	}
 	for (auto it = _userlist.begin(); it != _userlist.end(); it = it->next())
 	{
-		indexfile.Write(it->value->_offset);
+		indexfile.Write(it->value);
 	}
 	indexfile.Close();
 	rename(filename.c_str(), _indexFilename.c_str());
@@ -234,13 +109,13 @@ void Memkv::WriteIndex()
 
 int Memkv::Get(Logfile* file,string start_time,string end_time)
 {
-	auto start = _timelist.find(start_time);
-	auto end = _timelist.find(end_time);
+	auto start = _timelist.find(message(start_time,"","",""));
+	auto end = _timelist.find(message(end_time,"","",""));
 	int ret = 0;
 	for (auto it = start; it != end; it = it->next())
 	{
 		ret++;
-		*file << it->key << ": "<< it->value->_context << "\n";
+		*file << "[" << it->key._timestamp << "] [" << it->key._username << "] [" << it->key._topic << "]: " << it->key._context << "\n";
 	}
 	file->Flush();
 	return ret;
@@ -249,13 +124,13 @@ int Memkv::Get(Logfile* file,string start_time,string end_time)
 
 int Memkv::Get(Logfile* file,string userid, string start_time, string end_time)
 {
-	auto start = _timelist.find(userid + "-" + start_time);
-	auto end = _timelist.find(userid + "-" + end_time);
+	auto start = _userlist.find(message(start_time,userid,"",""));
+	auto end = _userlist.find(message(end_time, userid, "", ""));
 	int ret = 0;
 	for (auto it = start; it != end; it = it->next())
 	{
 		ret++;
-		*file << it->key << ": "<< it->value->_context << "\n";
+		*file << "[" << it->key._timestamp << "] [" <<it->key._username << "] ["<< it->key._topic << "]: " << it->key._context << "\n";
 	}
 	file->Flush();
 	return ret;
@@ -264,20 +139,19 @@ int Memkv::Get(Logfile* file,string userid, string start_time, string end_time)
 void Memkv::Set(const message& m)
 {
 	int offset = static_cast<int>(_logfile.WritePos());
+	_indexs.push_back(offset);
 	Log(m);
-}
-
-void Memkv::Set(Key key, string context)
-{
-	int offset = static_cast<int>(_logfile.WritePos());
-	Log(key, context);
-	shared_ptr<Value> v(new Value(context, offset));
-	_timelist.push_back(key._time_user_topic_key, v);
-	_userlist.push_back(key._user_time_topic_key, v);
+	_timelist.push_back(m, offset);
+	_userlist.push_back(m, offset);
 	_num++;
 }
 
+
 int Memkv::Log(const message& m)
 {
-	std::cout << m._timestamp << std::endl;
+	std::cout << m._timestamp << " " << m._username << " " << m._topic << " " << m._context << std::endl;
+	_logfile.Write(m._timestamp, m._username, m._topic, m._context);
+	_logfile.Writeline();
+	_logfile.Flush();
+	return 0;
 }

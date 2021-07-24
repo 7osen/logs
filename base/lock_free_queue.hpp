@@ -10,9 +10,12 @@ template<typename T>
 class lock_free_queue
 {
 public:
-	lock_free_queue():_head(0),_tail(0)
+	lock_free_queue() :_head(0), _tail(0)
 	{
-
+		for (int i = 0; i < QUEUE_LENGTH; i++)
+		{
+			_valid[i] = false;
+		}
 	}
 
 	~lock_free_queue()
@@ -31,20 +34,24 @@ public:
 			while (next == _head);
 		}
 		_queue[old] = val;
+		_valid[old] = true;
 	}
 
 	T front()
 	{
 		while (_head == _tail);
+		while (!_valid[_head]);
 		return _queue[_head];
 	}
 
 	void pop()
 	{
+		_valid[_head] = false;
 		_head = (_head + 1) % QUEUE_LENGTH;
 	}
 private:
-	T _queue[QUEUE_LENGTH];
 	int _head;
 	atomic<int> _tail;
+	bool _valid[QUEUE_LENGTH];
+	T _queue[QUEUE_LENGTH];
 };

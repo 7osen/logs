@@ -15,7 +15,6 @@ public:
 	}
 	~Kv(){}
 	void Restart();
-	void Set(string, string, string, string);
 	void Set(const message&);
 
 	int Get(string, string);
@@ -51,17 +50,6 @@ void Kv::Restart()
 	else _memkv->Restart();
 }
 
-void Kv::Set(string timestamp, string userid, string topic, string context)
-{
-	Key k(timestamp, userid, topic);
-	_memkv->Set(k, context);
-	if (_memkv->Size() > MaxFileSize)
-	{
-		_memkv->Close();
-		Roll();
-		_memkv = std::make_shared<Memkv>(_filename);
-	}
-}
 
 void Kv::Roll()
 {
@@ -180,4 +168,10 @@ void Kv::getFileNum()
 void Kv::Set(const message& m)
 {
 	_memkv->Set(m);
+	if (_memkv->Size() > MaxFileSize)
+	{
+		_memkv->Close();
+		Roll();
+		_memkv = std::make_shared<Memkv>(_filename);
+	}
 }

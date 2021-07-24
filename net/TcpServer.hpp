@@ -20,8 +20,7 @@ public:
 
 	~TcpServer()
 	{
-		close();
-		::close(_fd);
+		if (_running) close();
 	}
 
 	void close()
@@ -38,6 +37,8 @@ public:
 				delete _servers[i];
 			}
 		}
+		::close(_fd);
+		printf("close!!!\n");
 	}
 
 	void setMessageCallBack(const MessageCallBack& cb)

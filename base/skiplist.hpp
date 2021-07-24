@@ -32,24 +32,27 @@ private:
 template <typename K, typename V>
 class SkipList 
 {
-
+    typedef std::function<bool(K, K)> callback;
 public:
     SkipList();
     ~SkipList();
     int size();
     int push_back(K, V);
     int get_random_level();
+    void setCallback(const callback& cb) { _cmpcb = cb; }
     Node<K,V>* find(K);
     Node<K, V>* create_node(K, V, int);
     Node<K, V>* begin(){return _header->_forward[0];}
     Node<K, V>* end(){return nullptr;}
-
+    
 
 private:
+    bool cmp(K,K);
     int _max_level;
     int _skip_list_level;
     int _element_count;
     Node<K, V>* _header;
+    callback _cmpcb;
 };
 
 template<typename K, typename V>
@@ -68,7 +71,7 @@ int SkipList<K, V>::push_back(const K key, const V value)
     memset(update, 0, sizeof(Node<K, V>*) * (_max_level + 1));
 
     for (int i = _skip_list_level; i >= 0; i--) {
-        while (current->_forward[i] != nullptr && current->_forward[i]->key < key) {
+        while (current->_forward[i] != nullptr && _cmpcb(key, current->_forward[i]->key)) {
             current = current->_forward[i];
         }
         update[i] = current;
@@ -110,7 +113,7 @@ Node<K,V>* SkipList<K, V>::find(K key)
     Node<K, V>* current = _header;
 
     for (int i = _skip_list_level; i >= 0; i--) {
-        while (current->_forward[i] && current->_forward[i]->key < key) {
+        while (current->_forward[i] && _cmpcb(key, current->_forward[i]->key)) {
             current = current->_forward[i];
         }
     }
@@ -131,6 +134,7 @@ SkipList<K, V>::SkipList()
     K k;
     V v;
     this->_header = new Node<K, V>(k, v, _max_level);
+    _cmpcb = std::bind(&SkipList::cmp, this, std::placeholders::_1, std::placeholders::_2);
 };
 
 template<typename K, typename V>
@@ -152,4 +156,9 @@ int SkipList<K, V>::get_random_level()
     }
     k = (k < _max_level) ? k : _max_level;
     return k;
+}
+template<typename K, typename V>
+bool SkipList<K, V>::cmp(K lhs, K rhs)
+{
+    return lhs > rhs;
 }

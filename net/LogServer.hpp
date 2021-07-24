@@ -8,14 +8,6 @@ const char* TIMESTRING = "time";
 const char* USERNAMESTRING = "username";
 const char* TOPICSTRING = "topic";
 const char* CONTEXTSTRING = "context";
-enum keyType
-{
-	error = 0,
-	timestamp = 1,
-	username = 2,
-	topic = 3,
-	context = 4
-};
 
 
 class LogServer
@@ -43,38 +35,40 @@ public:
 		_server.close();
 	}
 
+	void find(string begin, string end)
+	{
+		_kv.Get(begin, end);
+	}
+
 	void onMessage(char* begin, char* end)
 	{
-		char *timestamp,*userid,*topic, *context;
-		int timestamplen, useridlen, topiclen, contextlen;
-		char* mid = std::find(begin, end, '-');
-		for (; mid != end; mid = std::find(begin, end, '-'))
+		string timestamp, username, topic, context;
+		char* mid = std::find(begin, end, '=');
+		for (; mid != end; mid = std::find(begin, end, '='))
 		{
-			char* next = std::find(next + 1, end, '&');
+			char* next = std::find(mid + 1, end, '&');
 			char* val = mid + 1;
 			int vallen = next - val;
 			if (strcmp(begin, mid - begin, TIMESTRING))
 			{
-				timestamp = val;
-				timestamplen = vallen;
+				timestamp.assign(val, next);
 			}
 			else if (strcmp(begin, mid - begin, USERNAMESTRING))
 			{
-				userid = val;
-				useridlen = vallen;
+				username.assign(val, next);
 			}
 			else if (strcmp(begin, mid - begin, TOPICSTRING))
 			{
-				topic = val;
-				topiclen = vallen;
+				topic.assign(val, next);
 			}
 			else if (strcmp(begin, mid - begin, CONTEXTSTRING))
 			{
-				context = val;
-				contextlen = vallen;
+				context.assign(val, next);
 			}
+			begin = next + 1;
 		}
-		Set(timestamp, timestamplen, userid, useridlen, topic, topiclen, context, contextlen);
+		//printf("%s %d %s %d %s %d %s %d\n", timestamp, timestamplen, username, usernamelen, topic, topiclen, context, contextlen);
+		Set(timestamp, username, topic, context);
 	}
 
 private:
@@ -87,16 +81,21 @@ private:
 		return true;
 	}
 
-	void Set(char* timestamp, int timestamplen, char* userid, int useridlen, char* topic, int topiclen, char* context, int contextlen)
+	void Set(string timestamp, string username, string topic, string context)
 	{
-		message* m = new message(timestamp, timestamplen, userid, useridlen, topic, topiclen, context, contextlen);
+		message* m = new message(timestamp,  username,  topic,  context);
 		_queue.push(m);
 	}
 
 	void Run()
 	{
-		_kv.Set(*_queue.front());
-		_queue.pop();
+		while (1)
+		{
+			message* m = _queue.front();
+			_kv.Set(*m);
+			delete m;
+			_queue.pop();
+		}
 	}
 
 	HttpServer _server;
