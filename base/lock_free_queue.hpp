@@ -1,13 +1,13 @@
 #pragma once
 
-
 #include <atomic>
+#include "noncopyable.hpp"
 using std::atomic;
 
-const int QUEUE_LENGTH = 40960;
+const int QUEUE_LENGTH = 409600;
 
 template<typename T>
-class lock_free_queue
+class lock_free_queue:noncopyable
 {
 public:
 	lock_free_queue() :_head(0), _tail(0)
@@ -33,11 +33,12 @@ public:
 			next = (old + 1) % QUEUE_LENGTH;
 			while (next == _head);
 		}
+
 		_queue[old] = val;
 		_valid[old] = true;
 	}
 
-	T front()
+	T& front()
 	{
 		while (_head == _tail);
 		while (!_valid[_head]);

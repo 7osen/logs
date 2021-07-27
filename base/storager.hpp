@@ -1,22 +1,22 @@
 #pragma once
-#include "memkv.hpp"
+#include "memtable.hpp"
 #include <vector>
 using std::vector;
 
-class Kv
+class storager:noncopyable
 {
 public:
-	Kv(string filename = "log")
-		:_filenum(1),_filename(Filepath + filename), _memkv(std::make_shared<Memkv>(_filename))
+	storager(string filename = "log")
+		:_filenum(1),_filename(Filepath + filename), _mems(std::make_shared<memtable>(_filename))
 	{
 		_logFileNames.emplace_back(_filename + ".log0");
 		_indexFileNames.emplace_back(_filename + ".index0");
 
 	}
-	~Kv(){}
+	~storager(){}
 	void Restart();
 	void Set(const message&);
-
+	void Flush() { _mems->Flush(); }
 	int Get(string, string);
 	int Get(string, string, string);
 	
@@ -24,34 +24,34 @@ private:
 	void Roll();
 	void getFileNum();
 	bool file_exists(const std::string& name);
-	int GetFromFile(Logfile*, string, string, string, string);
-	int find(Logfile*, Logfile*, string, int);
+	int GetFromFile(Logfile*, string, string, const message&, const message&);
+	int find(Logfile*, Logfile*, message, int);
 
 	int _filenum;
 	string _filename;
-	shared_ptr<Memkv> _memkv;
+	shared_ptr<memtable> _mems;
 	vector<string> _logFileNames;
 	vector<string> _indexFileNames;
 };
 
-bool Kv::file_exists(const std::string& name) {
+bool storager::file_exists(const std::string& name) {
 	struct stat buffer;
 	return (stat(name.c_str(), &buffer) == 0);
 }
 
-void Kv::Restart()
+void storager::Restart()
 {
 	getFileNum();
 	if (file_exists(_filename + ".index0"))
 	{
 		Roll();
-		_memkv = std::make_shared<Memkv>(_filename);
+		_mems = std::make_shared<memtable>(_filename);
 	}
-	else _memkv->Restart();
+	else _mems->Restart();
 }
 
 
-void Kv::Roll()
+void storager::Roll()
 {
 
 	if (_filenum < MaxFileNum)
@@ -80,14 +80,14 @@ void Kv::Roll()
 	}
 }
 
-int Kv::find(Logfile* log, Logfile* index, string v,int num)
+int storager::find(Logfile* log, Logfile* index, message v,int num)
 {
-	string val;
+	message val;
 	int l = 1, r = num, mid, offset;
 	index->SetReadPos(sizeof(int) * num);
 	index->Read(offset);
 	log->SetReadPos(offset);
-	log->Read(val);
+	log->Read(val._timestamp,val._username,val._topic,val._context);
 	if (v > val) return r * sizeof(int) + 1;
 	for (; l < r;)
 	{
@@ -106,13 +106,13 @@ int Kv::find(Logfile* log, Logfile* index, string v,int num)
 }
 
 
-int Kv::GetFromFile(Logfile* result, string logFilename, string indexFilename, string start_time, string end_time)
+int storager::GetFromFile(Logfile* result, string logFilename, string indexFilename, const message& start_time,const message& end_time)
 {
 	Logfile log(logFilename);
 	Logfile index(indexFilename);
 	int num = 0,offset = 0,ret = 0;
 	index.Read(num);
-	int begin = find(&log, &index, start_time, num);
+	int begin = find(&log, &index,start_time, num);
 	int end = find(&log, &index, end_time, num);
 	index.SetReadPos(begin);
 	string timestamp;
@@ -132,24 +132,35 @@ int Kv::GetFromFile(Logfile* result, string logFilename, string indexFilename, s
 }
 
 
-int Kv::Get(string start_time, string end_time)
+int storager::Get(string start_time, string end_time)
 {
 	Logfile result(Filepath + "result.log", ios::trunc);
-	int ret = _memkv->Get(&result, start_time, end_time);
+	message start(start_time, "", "", "");
+	message end(end_time, "", "", "");
+	int ret = _mems->Get(&result,start, end);
 	for (int i = 1; i < _filenum; i++)
 	{
-		ret += GetFromFile(&result,_logFileNames[i],_indexFileNames[i],start_time,end_time);
+		ret += GetFromFile(&result,_logFileNames[i],_indexFileNames[i], start, end);
 	}
 	result.Close();
 	return ret;
 }
 
-int Kv::Get(string userid, string start_time, string end_time)
+int storager::Get(string userid, string start_time, string end_time)
 {
-	
+	Logfile result(Filepath + "result.log", ios::trunc);
+	message start(start_time, userid, "", "");
+	message end(end_time, userid, "", "");
+	int ret = _mems->Get(&result, start, end);
+	for (int i = 1; i < _filenum; i++)
+	{
+		ret += GetFromFile(&result, _logFileNames[i], _indexFileNames[i], start, end);
+	}
+	result.Close();
+	return ret;
 }
 
-void Kv::getFileNum()
+void storager::getFileNum()
 {
 	string name;
 	for (int i = 0; i < MaxFileNum; i++)
@@ -165,13 +176,13 @@ void Kv::getFileNum()
 	}
 }
 
-void Kv::Set(const message& m)
+void storager::Set(const message& m)
 {
-	_memkv->Set(m);
-	if (_memkv->Size() > MaxFileSize)
+	_mems->Set(m);
+	if (_mems->Size() > MaxFileSize)
 	{
-		_memkv->Close();
+		_mems->Close();
 		Roll();
-		_memkv = std::make_shared<Memkv>(_filename);
+		_mems = std::make_shared<memtable>(_filename);
 	}
 }

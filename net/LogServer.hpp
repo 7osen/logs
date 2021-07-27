@@ -1,7 +1,8 @@
 #pragma once
-#include "../base/kv.hpp"
+#include "../base/storager.hpp"
 #include "../base/lock_free_queue.hpp"
 #include "HttpServer.hpp"
+#include "../base//timecount.hpp"
 #include <atomic>
 
 const char* TIMESTRING = "time";
@@ -10,7 +11,8 @@ const char* TOPICSTRING = "topic";
 const char* CONTEXTSTRING = "context";
 
 
-class LogServer
+
+class LogServer:noncopyable
 {
 public:
 	LogServer(int port,int threadnums = 1)
@@ -37,7 +39,7 @@ public:
 
 	void find(string begin, string end)
 	{
-		_kv.Get(begin, end);
+		_storager.Get(begin, end);
 	}
 
 	void onMessage(char* begin, char* end)
@@ -83,24 +85,32 @@ private:
 
 	void Set(string timestamp, string username, string topic, string context)
 	{
-		message* m = new message(timestamp,  username,  topic,  context);
-		_queue.push(m);
+		message m = message(timestamp,  username,  topic,  context);
+		_queue.push(std::move(m));
 	}
 
 	void Run()
 	{
+		int count = 0;
+		TimeCount t;
+		t.Update();
 		while (1)
 		{
-			message* m = _queue.front();
-			_kv.Set(*m);
-			delete m;
+			if (t.getSecond() > 1.0)
+			{
+				printf("%d\n", count);
+				count = 0;
+				t.Update();
+			}
+			_storager.Set(_queue.front());
+			count++;
 			_queue.pop();
 		}
 	}
 
 	HttpServer _server;
-	Kv _kv;
+	storager _storager;
 	std::thread* _thread;
-	lock_free_queue<message*> _queue;
+	lock_free_queue<message> _queue;
 };
 

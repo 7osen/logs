@@ -13,6 +13,7 @@
 #include "skiplist.hpp"
 #include "setting.hpp"
 #include "message.hpp"
+#include "noncopyable.hpp"
 
 using std::string;
 using std::vector;
@@ -24,14 +25,14 @@ using std::shared_ptr;
 static std::stringstream* _ss = new std::stringstream();
 
 
-class Memkv
+class memtable:noncopyable
 {
 public:
 
-	Memkv(string name)
+	memtable(string name)
 		:_num(0), _logFilename(name + ".log0"), _indexFilename (name + ".index0"),_logfile(_logFilename){}
 
-	~Memkv(){}
+	~memtable(){}
 
 	void Set(const message&);
 
@@ -42,8 +43,7 @@ public:
 
 	int Log(const message&);
 
-	int Get(Logfile*, string, string, string);
-	int Get(Logfile*, string, string);
+	int Get(Logfile*, const message&, const message&);
 	long Size(){return _logfile.WritePos();}
 private:
 	int _num;
@@ -51,18 +51,17 @@ private:
 	string _indexFilename;
 	Logfile _logfile;
 	vector<int> _indexs;
-	SkipList<message, int> _timelist;
-	SkipList<message, int> _userlist;
+	SkipList<message, int> _sortlist;
 };
 
-void Memkv::Close()
+void memtable::Close()
 {
 	_logfile.Close();
 	WriteIndex();
 }
 
 
-void Memkv::Restart()
+void memtable::Restart()
 {
 	char* timestamp;
 	char* userid;
@@ -74,23 +73,22 @@ void Memkv::Restart()
 		_logfile.Read(timestamp, userid, topic, context);
 		_logfile.ReadWrap();
 		message m(timestamp, userid, topic,context);
-		_timelist.push_back(m, offset);
-		_userlist.push_back(m, offset);
+		_sortlist.push_back(m, offset);
 		_num++;
 	}
 }
 
-void Memkv::Flush()
+void memtable::Flush()
 {
 	_logfile.Flush();
 }
 
-void Memkv::WriteIndex()
+void memtable::WriteIndex()
 {
 	string filename = _indexFilename + "w";
 	Logfile indexfile(filename,ios::trunc);
 	indexfile.Write(_num);
-	for (auto it = _timelist.begin(); it != _timelist.end(); it = it->next())
+	for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
 	{
 		indexfile.Write(it->value);
 	}
@@ -98,19 +96,15 @@ void Memkv::WriteIndex()
 	{
 		indexfile.Write(*it);
 	}
-	for (auto it = _userlist.begin(); it != _userlist.end(); it = it->next())
-	{
-		indexfile.Write(it->value);
-	}
 	indexfile.Close();
 	rename(filename.c_str(), _indexFilename.c_str());
 }
 
 
-int Memkv::Get(Logfile* file,string start_time,string end_time)
+int memtable::Get(Logfile* file,const message& start_message, const message& end_message)
 {
-	auto start = _timelist.find(message(start_time,"","",""));
-	auto end = _timelist.find(message(end_time,"","",""));
+	auto start = _sortlist.find(start_message);
+	auto end = _sortlist.find(end_message);
 	int ret = 0;
 	for (auto it = start; it != end; it = it->next())
 	{
@@ -122,34 +116,19 @@ int Memkv::Get(Logfile* file,string start_time,string end_time)
 }
 
 
-int Memkv::Get(Logfile* file,string userid, string start_time, string end_time)
-{
-	auto start = _userlist.find(message(start_time,userid,"",""));
-	auto end = _userlist.find(message(end_time, userid, "", ""));
-	int ret = 0;
-	for (auto it = start; it != end; it = it->next())
-	{
-		ret++;
-		*file << "[" << it->key._timestamp << "] [" <<it->key._username << "] ["<< it->key._topic << "]: " << it->key._context << "\n";
-	}
-	file->Flush();
-	return ret;
-}
 
-void Memkv::Set(const message& m)
+void memtable::Set(const message& m)
 {
 	int offset = static_cast<int>(_logfile.WritePos());
-	_indexs.push_back(offset);
 	Log(m);
-	_timelist.push_back(m, offset);
-	_userlist.push_back(m, offset);
+	_indexs.push_back(offset);
+	_sortlist.push_back(m, offset);
 	_num++;
 }
 
 
-int Memkv::Log(const message& m)
+int memtable::Log(const message& m)
 {
-	std::cout << m._timestamp << " " << m._username << " " << m._topic << " " << m._context << std::endl;
 	_logfile.Write(m._timestamp, m._username, m._topic, m._context);
 	_logfile.Writeline();
 	_logfile.Flush();

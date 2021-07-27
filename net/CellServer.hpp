@@ -6,6 +6,7 @@
 #include "Epoller.hpp"
 #include "TcpConnection.hpp"
 
+
 using std::mutex;
 
 class CellServer
@@ -70,13 +71,13 @@ void CellServer::Update()
 		Channel* channel = new Channel(i);
 		channel->EnableRead();
 		channel->SetCloseCallback(std::bind(&CellServer::RemoveChannel, this, channel));
-		channel->SetReadCallBack(_ReadCallBack);
 		channel->SetMessageCallBack(_MessageCallBack);
 		_epoller.Add(channel);
 	}
 	_NewClient.clear();
 
 	for (auto channel : _DeleteChannel)
+	if (channel)
 	{
 		_epoller.Remove(channel);
 		delete channel;

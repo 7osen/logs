@@ -5,13 +5,14 @@
 #include <string>
 #include <sstream>
 #include <cstring>
+#include "noncopyable.hpp"
 
 using std::ostream;
 using std::string;
 using std::fstream;
 using std::ios;
 
-class Logfile
+class Logfile: noncopyable
 {
 public:
 	Logfile(string filename,std::_Ios_Openmode flag = ios::app)

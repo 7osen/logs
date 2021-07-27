@@ -15,10 +15,15 @@ public:
     V value;
     Node<K, V>** _forward;
     Node() {}
-    Node(const K k, const V v, int level)
+    Node(int level)
     {
-        this->key = k;
-        this->value = v;
+        this->node_level = level;
+        this->_forward = new Node<K, V>*[level + 1];
+        memset(this->_forward, 0, sizeof(Node<K, V>*) * (level + 1));
+    }
+    Node(const K& k, const V& v, int level)
+        :key(k), value(v)
+    {
         this->node_level = level;
         this->_forward = new Node<K, V>*[level + 1];
         memset(this->_forward, 0, sizeof(Node<K, V>*) * (level + 1));
@@ -37,33 +42,30 @@ public:
     SkipList();
     ~SkipList();
     int size();
-    int push_back(K, V);
+    int push_back(const K&, const V&);
     int get_random_level();
-    void setCallback(const callback& cb) { _cmpcb = cb; }
-    Node<K,V>* find(K);
-    Node<K, V>* create_node(K, V, int);
+    Node<K,V>* find(const K&);
+    Node<K, V>* create_node(const K&, const V&, int);
     Node<K, V>* begin(){return _header->_forward[0];}
     Node<K, V>* end(){return nullptr;}
     
 
 private:
-    bool cmp(K,K);
     int _max_level;
     int _skip_list_level;
     int _element_count;
     Node<K, V>* _header;
-    callback _cmpcb;
 };
 
 template<typename K, typename V>
-Node<K, V>* SkipList<K, V>::create_node(const K k, const V v, int level) 
+Node<K, V>* SkipList<K, V>::create_node(const K& k, const V& v, int level) 
 {
     Node<K, V>* n = new Node<K, V>(k, v, level);
     return n;
 }
 
 template<typename K, typename V>
-int SkipList<K, V>::push_back(const K key, const V value)
+int SkipList<K, V>::push_back(const K& k, const V& value)
 {
 
     Node<K, V>* current = this->_header;
@@ -71,7 +73,7 @@ int SkipList<K, V>::push_back(const K key, const V value)
     memset(update, 0, sizeof(Node<K, V>*) * (_max_level + 1));
 
     for (int i = _skip_list_level; i >= 0; i--) {
-        while (current->_forward[i] != nullptr && _cmpcb(key, current->_forward[i]->key)) {
+        while (current->_forward[i] != nullptr && k > current->_forward[i]->key) {
             current = current->_forward[i];
         }
         update[i] = current;
@@ -88,7 +90,7 @@ int SkipList<K, V>::push_back(const K key, const V value)
             }
             _skip_list_level = random_level;
         }
-        Node<K, V>* inserted_node = create_node(key, value, random_level);
+        Node<K, V>* inserted_node = create_node(k, value, random_level);
 
         for (int i = 0; i <= random_level; i++) {
             inserted_node->_forward[i] = update[i]->_forward[i];
@@ -108,12 +110,12 @@ int SkipList<K, V>::size()
 
 //返回>=key的第一个
 template<typename K, typename V>
-Node<K,V>* SkipList<K, V>::find(K key) 
+Node<K,V>* SkipList<K, V>::find(const K& key) 
 {
     Node<K, V>* current = _header;
 
     for (int i = _skip_list_level; i >= 0; i--) {
-        while (current->_forward[i] && _cmpcb(key, current->_forward[i]->key)) {
+        while (current->_forward[i] &&  key >current->_forward[i]->key) {
             current = current->_forward[i];
         }
     }
@@ -133,8 +135,7 @@ SkipList<K, V>::SkipList()
 
     K k;
     V v;
-    this->_header = new Node<K, V>(k, v, _max_level);
-    _cmpcb = std::bind(&SkipList::cmp, this, std::placeholders::_1, std::placeholders::_2);
+    this->_header = new Node<K, V>(_max_level);
 };
 
 template<typename K, typename V>
@@ -156,9 +157,4 @@ int SkipList<K, V>::get_random_level()
     }
     k = (k < _max_level) ? k : _max_level;
     return k;
-}
-template<typename K, typename V>
-bool SkipList<K, V>::cmp(K lhs, K rhs)
-{
-    return lhs > rhs;
 }

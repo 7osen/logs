@@ -16,24 +16,26 @@ void print(char* begin, char* end)
 
 int main()
 {
-	/*string filename = "log0";
-	Kv k(filename);
+
+	//LogServer s(8000,1);
+	//thread t(&LogServer::start,&s);
+	//t.detach();
+
+	//s.close();
+	//s.find("2012", "2013");
 	TimeCount t;
-	t.Update();1
-	for (int i = 1; i <= 1000000; i++)
-	{
-		k.Set("2323", "1", "2", "value");
-	}
-	cout << t.getSecond() << endl;
+	storager s;
 	t.Update();
-	cout << k.Get("1", "9999999") << endl;
-	cout << t.getSecond() << endl;*/
-	LogServer s(8000);
-	thread t(&LogServer::start,&s);
-	t.detach();
+	for (int i = 0; i < 1000000; i++)
+	{
+		message m("123", "", "789", "123");
+		s.Set(m);
+		
+	}
+	//s.Flush();
+	cout << t.getSecond() << endl;
+	cout << num << endl;
+	s.Get("000", "456");
 	char ch;
 	scanf("%c", &ch);
-	s.find("2012", "2013");
-	scanf("%c", &ch);
-	//s.close();
 }	

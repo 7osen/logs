@@ -7,11 +7,12 @@
 #include <arpa/inet.h>
 #include <string>
 #include "../base/buffer.hpp"
+#include "../base//noncopyable.hpp"
 
 using std::function;
 using std::string;
 
-class Channel
+class Channel:noncopyable
 {
 	typedef function<void()> CallBack;
 	typedef function<void(Channel*, Buffer*)> MessageCallBack;
@@ -21,11 +22,11 @@ public:
 	{}
 	~Channel()
 	{
-		delete _buf;
 		close(_fd);
  	}
 	int fd(){return _fd;}
 	uint32_t attention(){return _attention;}
+	void Read();
 	void EnableRead(){_attention |= EPOLLIN;}
 	void DisableRead(){_attention ^= EPOLLIN;}
 	void SetReadCallBack(const CallBack& cb){_ReadCallBack = cb;}
@@ -45,28 +46,28 @@ private:
 	CallBack _ReadCallBack;
 	CallBack _CloseCallBack;
 	MessageCallBack _MessageCallBack;
+
 };
 
 void Channel::HandleEvent()
 {
-	if (_event & _attention & (EPOLLHUP | EPOLLERR))
-	{
-		if (_CloseCallBack) _CloseCallBack();
-	}
 	if (_event & _attention & EPOLLIN)
 	{
-		recvdata();
+		Read();
+	}
+	else if (_event & _attention & (EPOLLHUP | EPOLLERR))
+	{
+		_CloseCallBack();
 	}
 	_event = 0;
 }
 
-void Channel::recvdata()
+void Channel::Read( )
 {
-	int n = _buf->readFD(_fd);
+	int n = _buf->readFD(fd());
 	if (n > 0)
 	{
 		_MessageCallBack(this, _buf);
-		_buf->reset();
 	}
 	else _CloseCallBack();
 }

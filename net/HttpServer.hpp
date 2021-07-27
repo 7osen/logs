@@ -3,7 +3,7 @@
 #include "TcpServer.hpp"
 #include "HttpHeader.hpp"
 
-class HttpServer
+class HttpServer:noncopyable
 {
 	typedef std::function<void(char*, char*)> CallBack;
 public:
@@ -47,7 +47,7 @@ private:
 			//std::cout << header.method() << std::endl;
 			end = end + 4;
 			int dataLength = std::stoi(header.get("Content-Length"));
-			if (buf->end() - end >= dataLength)
+			if (buf->end() - end > dataLength)
 			{
 				buf->getData(end - begin);
 				if (_OnMessageCallBack)
@@ -55,12 +55,15 @@ private:
 					_OnMessageCallBack(buf->begin(), buf->begin() + dataLength);
 				}
 				buf->getData(dataLength);
-				conn->Write(header.get("Version") + " " + "200 OK\r\nContent-Length: 0\r\n\r\n");
+				//conn->Write(header.get("Version") + " " + "200 OK\r\nContent-Length: 0\r\n\r\n");
 			}
 			else break;
+			begin = buf->begin();
 		}
 		buf->reset();
+		buf->reset();
 	}
+
 	TcpServer _server;
 	CallBack _OnMessageCallBack;
 };

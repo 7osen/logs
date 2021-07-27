@@ -5,13 +5,14 @@
 #include <memory.h>
 #include "Channel.hpp"
 #include <sys/epoll.h>
+#include "../base//noncopyable.hpp"
 
 using std::vector;
 using std::map;
 
 const int EPOLL_SIZE = 10240;
 
-class Epoller
+class Epoller:noncopyable
 {
 
 public:
@@ -47,7 +48,6 @@ void Epoller::Remove(Channel* channel)
 {
 	Update(EPOLL_CTL_DEL, channel);
 	int fd = channel->fd();
-	delete channel;
 	_channels.erase(fd);
 }
 

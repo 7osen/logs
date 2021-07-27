@@ -13,8 +13,8 @@ public:
 	Buffer(size_t bufferSize = BUFFER_SIZE)
 		:_data(new char[bufferSize]), _bufferSize(bufferSize), _Readpos(0), _Writepos(0){}
 
-	~Buffer(){ delete[] _data;}
-	void getData(int len){ _Readpos += len;}
+	~Buffer(){ delete _data;}
+	void getData(int len) { _Readpos += len;  if (_Writepos > _Readpos) ; }
 	void reset();
 	char* end(){return _data + _Writepos;}
 	char* begin(){return _data + _Readpos;}
@@ -38,6 +38,7 @@ ssize_t Buffer::readFD(int fd)
 
 void Buffer::reset()
 {
+	if (!availRead()) return;
 	memcpy(_data, _data + _Readpos, availRead());
 	_Writepos = availRead();
 	_Readpos = 0;

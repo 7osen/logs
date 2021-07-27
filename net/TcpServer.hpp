@@ -8,7 +8,7 @@
 
 using std::vector;
 
-class TcpServer
+class TcpServer:noncopyable
 {
 	typedef function<void(Channel*, Buffer*)> MessageCallBack;
 public:
