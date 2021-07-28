@@ -50,7 +50,7 @@ public:
 		}
 	}
 
-	string get(string key)
+	string get(const string key)
 	{
 		return _attributes[key];
 	}
@@ -99,8 +99,19 @@ void httpHeader::getMethod()
 
 void httpHeader::getUrl()
 {
-	char* next = std::find(_begin, _end, ' ');
+	char* space = std::find(_begin, _end, ' ');
+	char* next = std::find(_begin, space, '?');
 	_attributes["Url"] = string(_begin, next);
+	while (next != space)
+	{
+		_begin = next + 1;
+		next = std::find(_begin, space, '=');
+		string key(_begin, next);
+		_begin = next + 1;
+		next = std::find(_begin, space, '&');
+		string val(_begin, next);
+		_attributes[key] = val;
+	}
 	_begin = next + 1;
 }
 

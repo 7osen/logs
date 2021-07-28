@@ -43,7 +43,7 @@ public:
 
 	int Log(const message&);
 
-	int Get(Logfile*, const message&, const message&);
+	int Get(std::stringstream*, const message&, const message&);
 	long Size(){return _logfile.WritePos();}
 private:
 	int _num;
@@ -101,7 +101,7 @@ void memtable::WriteIndex()
 }
 
 
-int memtable::Get(Logfile* file,const message& start_message, const message& end_message)
+int memtable::Get(std::stringstream* ss,const message& start_message, const message& end_message)
 {
 	auto start = _sortlist.find(start_message);
 	auto end = _sortlist.find(end_message);
@@ -109,9 +109,8 @@ int memtable::Get(Logfile* file,const message& start_message, const message& end
 	for (auto it = start; it != end; it = it->next())
 	{
 		ret++;
-		*file << "[" << it->key._timestamp << "] [" << it->key._username << "] [" << it->key._topic << "]: " << it->key._context << "\n";
+		*ss << "[" << it->key._timestamp << "] [" << it->key._username << "] [" << it->key._topic << "]: " << it->key._context << "\n";
 	}
-	file->Flush();
 	return ret;
 }
 

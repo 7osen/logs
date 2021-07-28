@@ -4,7 +4,6 @@
 
 using std::string;
 
-int num = 0;
 
 class message
 {
@@ -26,9 +25,7 @@ public:
 		_username(m._username),
 		_topic(m._topic),
 		_context(m._context)
-	{	
-		num++;
-	}
+	{}
 
 
 	bool operator > (const message& m)

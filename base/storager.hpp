@@ -17,14 +17,13 @@ public:
 	void Restart();
 	void Set(const message&);
 	void Flush() { _mems->Flush(); }
-	int Get(string, string);
-	int Get(string, string, string);
+	int Get(std::stringstream*,const string&, const string&, const string&);
 	
 private:
 	void Roll();
 	void getFileNum();
 	bool file_exists(const std::string& name);
-	int GetFromFile(Logfile*, string, string, const message&, const message&);
+	int GetFromFile(std::stringstream*, string, string, const message&, const message&);
 	int find(Logfile*, Logfile*, message, int);
 
 	int _filenum;
@@ -95,7 +94,7 @@ int storager::find(Logfile* log, Logfile* index, message v,int num)
 		index->SetReadPos(sizeof(int) * mid);
 		index->Read(offset);
 		log->SetReadPos(offset);
-		log->Read(val);
+		log->Read(val._timestamp, val._username, val._topic, val._context);
 		if (val > v)
 		{
 			r = mid;
@@ -106,7 +105,7 @@ int storager::find(Logfile* log, Logfile* index, message v,int num)
 }
 
 
-int storager::GetFromFile(Logfile* result, string logFilename, string indexFilename, const message& start_time,const message& end_time)
+int storager::GetFromFile(std::stringstream* ss, string logFilename, string indexFilename, const message& start_time,const message& end_time)
 {
 	Logfile log(logFilename);
 	Logfile index(indexFilename);
@@ -126,37 +125,21 @@ int storager::GetFromFile(Logfile* result, string logFilename, string indexFilen
 		log.Read(timestamp, userid, topic, context);
 		log.ReadWrap();
 		ret++;
-		*result << timestamp << "-" << userid << "-" << topic << ": " << context << "\n";
+		*ss << timestamp << "-" << userid << "-" << topic << ": " << context << "\n";
 	}
 	return ret;
 }
 
 
-int storager::Get(string start_time, string end_time)
+int storager::Get(std::stringstream* ss,const string& username,const string& start_time,const string& end_time)
 {
-	Logfile result(Filepath + "result.log", ios::trunc);
-	message start(start_time, "", "", "");
-	message end(end_time, "", "", "");
-	int ret = _mems->Get(&result,start, end);
+	message start(start_time, username, "", "");
+	message end(end_time, username, "", "");
+	int ret = _mems->Get(ss, start, end);
 	for (int i = 1; i < _filenum; i++)
 	{
-		ret += GetFromFile(&result,_logFileNames[i],_indexFileNames[i], start, end);
+		ret += GetFromFile(ss, _logFileNames[i], _indexFileNames[i], start, end);
 	}
-	result.Close();
-	return ret;
-}
-
-int storager::Get(string userid, string start_time, string end_time)
-{
-	Logfile result(Filepath + "result.log", ios::trunc);
-	message start(start_time, userid, "", "");
-	message end(end_time, userid, "", "");
-	int ret = _mems->Get(&result, start, end);
-	for (int i = 1; i < _filenum; i++)
-	{
-		ret += GetFromFile(&result, _logFileNames[i], _indexFileNames[i], start, end);
-	}
-	result.Close();
 	return ret;
 }
 

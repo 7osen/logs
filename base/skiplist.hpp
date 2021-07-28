@@ -72,8 +72,10 @@ int SkipList<K, V>::push_back(const K& k, const V& value)
     Node<K, V>* update[_max_level + 1];
     memset(update, 0, sizeof(Node<K, V>*) * (_max_level + 1));
 
-    for (int i = _skip_list_level; i >= 0; i--) {
-        while (current->_forward[i] != nullptr && k > current->_forward[i]->key) {
+    for (int i = _skip_list_level; i >= 0; i--)
+    {
+        while (current->_forward[i] != nullptr && k > current->_forward[i]->key) 
+        {
             current = current->_forward[i];
         }
         update[i] = current;
@@ -84,15 +86,18 @@ int SkipList<K, V>::push_back(const K& k, const V& value)
     {
         int random_level = get_random_level();
 
-        if (random_level > _skip_list_level) {
-            for (int i = _skip_list_level + 1; i < random_level + 1; i++) {
+        if (random_level > _skip_list_level) 
+        {
+            for (int i = _skip_list_level + 1; i < random_level + 1; i++)
+            {
                 update[i] = _header;
             }
             _skip_list_level = random_level;
         }
         Node<K, V>* inserted_node = create_node(k, value, random_level);
 
-        for (int i = 0; i <= random_level; i++) {
+        for (int i = 0; i <= random_level; i++) 
+        {
             inserted_node->_forward[i] = update[i]->_forward[i];
             update[i]->_forward[i] = inserted_node;
         }

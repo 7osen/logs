@@ -4,7 +4,7 @@
 #include "noncopyable.hpp"
 using std::atomic;
 
-const int QUEUE_LENGTH = 409600;
+const int QUEUE_LENGTH = 204800;
 
 template<typename T>
 class lock_free_queue:noncopyable

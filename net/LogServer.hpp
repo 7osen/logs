@@ -18,11 +18,13 @@ public:
 	LogServer(int port,int threadnums = 1)
 		:_server(port, threadnums)
 	{
-		_server.setOnMessageCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
+		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
+		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 	}
 
 	~LogServer()
 	{
+
 	}
 
 	void start()
@@ -37,9 +39,12 @@ public:
 		_server.close();
 	}
 
-	void find(string begin, string end)
+	void find(string& st,const string& username,const string& begin, const string& end)
 	{
-		_storager.Get(begin, end);
+		std::stringstream* ss = new std::stringstream();
+		_storager.Get(ss,username,begin, end);
+		st = ss->str();
+		delete ss;
 	}
 
 	void onMessage(char* begin, char* end)
@@ -69,7 +74,6 @@ public:
 			}
 			begin = next + 1;
 		}
-		//printf("%s %d %s %d %s %d %s %d\n", timestamp, timestamplen, username, usernamelen, topic, topiclen, context, contextlen);
 		Set(timestamp, username, topic, context);
 	}
 

@@ -3,11 +3,14 @@
 #include "TcpServer.hpp"
 #include "HttpHeader.hpp"
 
+using std::stringstream;
+
 class HttpServer:noncopyable
 {
 	typedef std::function<void(char*, char*)> CallBack;
+	typedef std::function<void(string&,const string&, const string&, const string&)> GetCallBack;
 public:
-	HttpServer(int port,int threadnum = 1)
+	HttpServer(int port = 8000,int threadnum = 1)
 		:_server(port)
 	{
 		_server.setThreadnum(threadnum);
@@ -29,9 +32,14 @@ public:
 		_server.start();
 	}
 
-	void setOnMessageCallBack(const CallBack& cb)
+	void setPostCallBack(const CallBack& cb)
 	{
-		_OnMessageCallBack = cb;
+		_PostCallBack = cb;
+	}
+	
+	void setGetCallBack(const GetCallBack& cb)
+	{
+		_GetCallBack = cb;
 	}
 
 
@@ -44,26 +52,47 @@ private:
 		for (; end != buf->end(); end = get_http_header_end(buf->begin(), buf->end()))
 		{
 			httpHeader header(begin, end);
-			//std::cout << header.method() << std::endl;
 			end = end + 4;
-			int dataLength = std::stoi(header.get("Content-Length"));
-			if (buf->end() - end > dataLength)
+			string len = header.get("Content-Length");
+			int dataLength = 0;
+			if (len != "")	 dataLength = std::stoi(len);
+			if (buf->end() - end >= dataLength)
 			{
+				string response = "";
 				buf->getData(end - begin);
-				if (_OnMessageCallBack)
+				if (header.method() == HttpMethod::POST)
 				{
-					_OnMessageCallBack(buf->begin(), buf->begin() + dataLength);
+					if (_PostCallBack) 
+						_PostCallBack(buf->begin(), buf->begin() + dataLength);
 				}
+				else if (header.method() == HttpMethod::GET)
+				{
+					if (_GetCallBack)
+					_GetCallBack(response,header.get("username"), header.get("begin"), header.get("end") + "-");
+				}
+				OnRequest(conn, header.get("Version"), response);
 				buf->getData(dataLength);
-				//conn->Write(header.get("Version") + " " + "200 OK\r\nContent-Length: 0\r\n\r\n");
+				
 			}
 			else break;
 			begin = buf->begin();
 		}
 		buf->reset();
-		buf->reset();
+	}
+
+	void OnRequest(Channel* conn,const string& version, const string& st)
+	{
+		stringstream ss;
+		int l = st.length();
+		if (l == 0) 
+			ss << version << " " << "204 NotContent\r\n\r\n";
+		else 
+			ss << version << " " << "200 OK\r\nContent-Length: " << l << "\r\n\r\n" << st;
+		//std::cout << ss.str() << std::endl;
+		conn->Write(ss.str());
 	}
 
 	TcpServer _server;
-	CallBack _OnMessageCallBack;
+	CallBack _PostCallBack;
+	GetCallBack _GetCallBack;
 };
