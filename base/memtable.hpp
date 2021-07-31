@@ -30,78 +30,85 @@ class memtable:noncopyable
 public:
 
 	memtable(string name)
-		:_num(0), _logFilename(name + ".log0"), _indexFilename (name + ".index0"),_logfile(_logFilename){}
+		:_num(0), _dataFilename(name + ".log0"), _indexFilename (name + ".index0"),_offset(0)
+	{}
 
 	~memtable(){}
 
-	void Set(const message&);
+	void set(const message&);
 
-	void Flush();
-	void Close();
-	void Restart();
-	void WriteIndex();
+	void flush();
+	void close();
+	void restart(const string&);
+	void writeIndex();
+	void writeData();
+	int log(const message&);
 
-	int Log(const message&);
-
-	int Get(std::stringstream*, const message&, const message&);
-	long Size(){return _logfile.WritePos();}
+	int get(std::stringstream*, const message&, const message&,int);
 private:
 	int _num;
-	string _logFilename;
+	int _offset;
+	string _dataFilename;
 	string _indexFilename;
-	Logfile _logfile;
-	vector<int> _indexs;
-	SkipList<message, int> _sortlist;
+	SkipList<message, int32_t> _sortlist;
 };
 
-void memtable::Close()
+void memtable::close()
 {
-	_logfile.Close();
-	WriteIndex();
+	writeIndex();
 }
 
 
-void memtable::Restart()
+void memtable::restart(const string& file)
 {
-	char* timestamp;
-	char* userid;
-	char* topic;
-	char* context;
-	while (!_logfile.Eof())
+	string timestamp;
+	string topic;
+	string context;
+	logfile tempfile(file);
+	while (!tempfile.eof())
 	{
-		int offset = _logfile.WritePos();
-		_logfile.Read(timestamp, userid, topic, context);
-		_logfile.ReadWrap();
-		message m(timestamp, userid, topic,context);
-		_sortlist.push_back(m, offset);
+		tempfile.Read(timestamp, topic, context);
+		message m(timestamp, topic,context);
+		_sortlist.push_back(m, 0);
 		_num++;
 	}
+	tempfile.close();
 }
 
-void memtable::Flush()
+void memtable::flush()
 {
-	_logfile.Flush();
+	writeData();
+	writeIndex();
 }
 
-void memtable::WriteIndex()
+void memtable::writeData()
+{
+	logfile datafile(_dataFilename, ios::trunc);
+	for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
+	{
+		it->value = _offset;
+		_offset += it->key.length();
+		datafile.Write(it->key._timestamp,it->key._topic,it->key._context);
+	}
+	datafile.close();
+}
+
+void memtable::writeIndex()
 {
 	string filename = _indexFilename + "w";
-	Logfile indexfile(filename,ios::trunc);
+	logfile indexfile(filename,ios::trunc);
 	indexfile.Write(_num);
 	for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
 	{
 		indexfile.Write(it->value);
 	}
-	for (auto it = _indexs.begin(); it != _indexs.end(); it++)
-	{
-		indexfile.Write(*it);
-	}
-	indexfile.Close();
+	indexfile.Write(_offset);
+	indexfile.close();
 	rename(filename.c_str(), _indexFilename.c_str());
 }
 
 
-int memtable::Get(std::stringstream* ss,const message& start_message, const message& end_message)
+int memtable::get(std::stringstream* ss,const message& start_message, const message& end_message,int num)
 {
 	auto start = _sortlist.find(start_message);
 	auto end = _sortlist.find(end_message);
@@ -109,27 +116,21 @@ int memtable::Get(std::stringstream* ss,const message& start_message, const mess
 	for (auto it = start; it != end; it = it->next())
 	{
 		ret++;
-		*ss << "[" << it->key._timestamp << "] [" << it->key._username << "] [" << it->key._topic << "]: " << it->key._context << "\n";
+		*ss << "[" << it->key._timestamp  << "] [" << it->key._topic << "]: " << it->key._context << "\n";
+		if (ret == num) return ret;
 	}
 	return ret;
 }
 
-
-
-void memtable::Set(const message& m)
+void memtable::set(const message& m)
 {
-	int offset = static_cast<int>(_logfile.WritePos());
-	Log(m);
-	_indexs.push_back(offset);
-	_sortlist.push_back(m, offset);
+	_sortlist.push_back(m, 0);
 	_num++;
 }
 
-
-int memtable::Log(const message& m)
+int memtable::log(const message& m)
 {
-	_logfile.Write(m._timestamp, m._username, m._topic, m._context);
-	_logfile.Writeline();
-	_logfile.Flush();
+	//_logfile.Write(m._timestamp, m._topic, m._context);
+	//_logfile.flush();
 	return 0;
 }

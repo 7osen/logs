@@ -12,27 +12,28 @@ public:
 	{
 	}
 
-	message(const string& timestamp, const string& username, const string& topic, const string& context)
+	message(const string& timestamp, const string& topic, const string& context)
 		:_timestamp(timestamp),
-		_username(username),
 		_topic(topic),
 		_context(context)
-	{}
+	{
+		_len = sizeof(size_t) * 3 + _topic.length() + _timestamp.length() + _context.length();
+	}
 
 
 	message(const message& m)
 		:_timestamp(m._timestamp),
-		_username(m._username),
 		_topic(m._topic),
 		_context(m._context)
-	{}
+	{
+		_len = sizeof(size_t) * 3 + _topic.length() + _timestamp.length() + _context.length();
+	}
 
 
 	bool operator > (const message& m)
 	{
-		if (_username != m._username) return _username > m._username;
-		if (_timestamp != m._timestamp) return _timestamp > m._timestamp;
 		if (_topic != m._topic) return _topic > m._topic;
+		if (_timestamp != m._timestamp) return _timestamp > m._timestamp;
 		return _context > m._context;
 	}
 
@@ -42,19 +43,21 @@ public:
 	}
 
 	string _timestamp;
-	string _username;
 	string _topic;
 	string _context;
+	int length()
+	{
+		return _len;
+	}
 private:
-
+	int _len;
 
 };
 
 bool operator > (const message& m1,const message& m2)
 {
-	if (m1._username != m2._username) return m1._username > m2._username;
-	if (m1._timestamp != m2._timestamp) return m1._timestamp > m2._timestamp;
 	if (m1._topic != m2._topic) return m1._topic > m2._topic;
+	if (m1._timestamp != m2._timestamp) return m1._timestamp > m2._timestamp;
 	return m1._context > m2._context;
 }
 

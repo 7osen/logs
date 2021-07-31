@@ -6,39 +6,43 @@
 #include <sstream>
 #include <cstring>
 #include "noncopyable.hpp"
+#include "buffer.hpp"
+#include "setting.hpp"
 
 using std::ostream;
 using std::string;
 using std::fstream;
 using std::ios;
 
-class Logfile: noncopyable
+class logfile: noncopyable
 {
 public:
-	Logfile(string filename,std::_Ios_Openmode flag = ios::app)
+	logfile(string filename, std::_Ios_Openmode flag = ios::app)
+		:_filename(filename) , _times(0)
 	{
 		_file.open(filename, ios::in | ios::out | ios::binary | flag);
 	}
-	~Logfile(){}
+	~logfile(){}
 
 	void Writeline();
-	void Flush() { _file.flush(); }
-	void SetReadPos(long pos) { _file.seekg(pos); }
-	void SetWritePos(long pos) { _file.seekp(pos); }
-	void ReadWrap() { _file.get(); }
-	void Close() { Flush(); _file.close(); }
-	bool Eof() { return _file.peek() == EOF; }
-	long ReadPos() { return _file.tellg(); }
-	long WritePos() { return _file.tellp(); }
+	void flush();
+	void setReadPos(int32_t pos) { _file.seekg(pos); }
+	void setWritePos(int32_t pos) { _file.seekp(pos); }
+	void readWrap() { _file.get(); }
+	void close() { _file.flush(); _file.close(); }
+	bool eof() { return _file.peek() == EOF; }
+	const string& name() { return _filename; };
+	int32_t readPos() { return _file.tellg(); }
+	int32_t writePos() { return _file.tellp(); }
 
 	template<typename T, typename ...Args>
-	void Write(T,Args ...);
+	void Write(const T&,const Args& ...);
 
 	template<typename T, typename ...Args>
 	void Read(T&,Args& ...);
 
 	template<typename T>
-	void Write(T);
+	void Write(const T&);
 
 	template<typename T>
 	void Read(T&);
@@ -46,88 +50,85 @@ public:
 	template<typename T>
 	ostream& operator << (T t){return _file << t;}
 private:
+	string _filename;
 	fstream _file;
+	int _times;
+	Buffer _buffer;
 };
 
+void logfile::flush()
+{
+	_times++;
+	if (_times >= EveryFlush)
+	{
+		_file.flush();
+		_times = 0;
+	}
+}
+
 template<>
-void Logfile::Write(int num)
+void logfile::Write(const int& num)
 {
 	_file.write((char*)&num, sizeof(int));
 }
 
 template<>
-void Logfile::Write(size_t num)
+void logfile::Write(const size_t& num)
 {
 	_file.write((char*)&num, sizeof(size_t));
 	
 }
 
 template<>
-void Logfile::Write(string st)
+void logfile::Write(const string& st)
 {
 	Write(st.length());
 	_file << st;
 }
 
-template<>
-void Logfile::Write(char* ch)
-{
-	Write(strlen(ch));
-	_file << ch;
-}
-
-template<>
-void Logfile::Write(const char* ch)
-{
-	Write(strlen(ch));
-	_file << ch;
-}
-
 
 template<typename T>
-void Logfile::Write(T value)
+void logfile::Write(const T& value)
 {
 	std::cout << "Invalid para : " << value << std::endl;
 }
 
 template<typename T,typename ...Args>
-void Logfile::Write(T first,Args ... args)
+void logfile::Write(const T& first,const Args& ... args)
 {
 	Write(first);
 	Write(args...);
 
 }
 
-void Logfile::Writeline()
+void logfile::Writeline()
 {
 	_file << "\n";
 }
 
 template<>
-void Logfile::Read(int& num)
+void logfile::Read(int& num)
 {
 	_file.read((char*)&num, sizeof(int));
 }
 
 template<>
-void Logfile::Read(size_t& num)
+void logfile::Read(size_t& num)
 {
 	_file.read((char*)&num, sizeof(size_t));
 }
 
 template<>
-void Logfile::Read(string& st)
+void logfile::Read(string& st)
 {
 	size_t len = 0;
 	Read(len);
-	char* ch = new char[len];
-	_file.read(ch, len);
-	st.assign(ch, len);
-	delete[] ch;
+	_file.read(_buffer.begin(), len);
+	st.assign(_buffer.begin(), len);
 }
 
 template<>
-void Logfile::Read(char*& ch)
+void logfile::Read(char*& ch)
 {
 	size_t len = 0;
 	Read(len);
@@ -135,7 +136,7 @@ void Logfile::Read(char*& ch)
 }
 
 template<typename T, typename ...Args>
-void Logfile::Read(T& first, Args&... args)
+void logfile::Read(T& first, Args&... args)
 {
 
 	Read(first);
@@ -143,7 +144,7 @@ void Logfile::Read(T& first, Args&... args)
 }
 
 template<typename T>
-void Logfile::Read(T& value)
+void logfile::Read(T& value)
 {
 	std::cout << "Invalid para: " << value << std::endl;
 }

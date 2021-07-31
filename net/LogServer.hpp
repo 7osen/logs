@@ -6,7 +6,6 @@
 #include <atomic>
 
 const char* TIMESTRING = "time";
-const char* USERNAMESTRING = "username";
 const char* TOPICSTRING = "topic";
 const char* CONTEXTSTRING = "context";
 
@@ -18,8 +17,9 @@ public:
 	LogServer(int port,int threadnums = 1)
 		:_server(port, threadnums)
 	{
+		_queue = new lock_free_queue<message>();
 		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
-		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
 	}
 
 	~LogServer()
@@ -29,7 +29,7 @@ public:
 
 	void start()
 	{
-		_thread = new std::thread(std::bind(&LogServer::Run, this));
+		_thread = new std::thread(std::bind(&LogServer::run, this));
 		_thread->detach();
 		_server.start();
 	}
@@ -39,17 +39,18 @@ public:
 		_server.close();
 	}
 
-	void find(string& st,const string& username,const string& begin, const string& end)
+private:
+	void find(string& st, const string& username, const string& begin, const string& end,int num = 10000)
 	{
 		std::stringstream* ss = new std::stringstream();
-		_storager.Get(ss,username,begin, end);
+		_storager.get(ss, username, begin, end,num);
 		st = ss->str();
 		delete ss;
 	}
 
 	void onMessage(char* begin, char* end)
 	{
-		string timestamp, username, topic, context;
+		string timestamp, topic, context;
 		char* mid = std::find(begin, end, '=');
 		for (; mid != end; mid = std::find(begin, end, '='))
 		{
@@ -59,10 +60,6 @@ public:
 			if (strcmp(begin, mid - begin, TIMESTRING))
 			{
 				timestamp.assign(val, next);
-			}
-			else if (strcmp(begin, mid - begin, USERNAMESTRING))
-			{
-				username.assign(val, next);
 			}
 			else if (strcmp(begin, mid - begin, TOPICSTRING))
 			{
@@ -74,10 +71,8 @@ public:
 			}
 			begin = next + 1;
 		}
-		Set(timestamp, username, topic, context);
+		set(timestamp, topic, context);
 	}
-
-private:
 	bool strcmp(char* ch, int len, const char* src)
 	{
 		for (int i = 0; i < len; i++)
@@ -87,13 +82,13 @@ private:
 		return true;
 	}
 
-	void Set(string timestamp, string username, string topic, string context)
+	void set(string timestamp, string topic, string context)
 	{
-		message m = message(timestamp,  username,  topic,  context);
-		_queue.push(std::move(m));
+		message m = message(timestamp,  topic,  context);
+		_queue->push(std::move(m));
 	}
 
-	void Run()
+	void run()
 	{
 		int count = 0;
 		TimeCount t;
@@ -106,15 +101,15 @@ private:
 				count = 0;
 				t.Update();
 			}
-			_storager.Set(_queue.front());
+			_storager.set(_queue->front());
 			count++;
-			_queue.pop();
+			_queue->pop();
 		}
 	}
 
 	HttpServer _server;
 	storager _storager;
 	std::thread* _thread;
-	lock_free_queue<message> _queue;
+	lock_free_queue<message>* _queue;
 };
 

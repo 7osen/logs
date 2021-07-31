@@ -10,9 +10,9 @@ template<typename T>
 class lock_free_queue:noncopyable
 {
 public:
-	lock_free_queue() :_head(0), _tail(0)
+	lock_free_queue(int size = QUEUE_LENGTH) :_size(size),_head(0), _tail(0)
 	{
-		for (int i = 0; i < QUEUE_LENGTH; i++)
+		for (int i = 0; i < size; i++)
 		{
 			_valid[i] = false;
 		}
@@ -25,12 +25,12 @@ public:
 
 	void push(const T& val)
 	{
-		int next = (_tail + 1) % QUEUE_LENGTH;
+		int next = (_tail + 1) % _size;
 		while (next == _head);
 		int old = _tail;
 		while (!_tail.compare_exchange_weak(old, next))
 		{
-			next = (old + 1) % QUEUE_LENGTH;
+			next = (old + 1) % _size;
 			while (next == _head);
 		}
 
@@ -48,10 +48,11 @@ public:
 	void pop()
 	{
 		_valid[_head] = false;
-		_head = (_head + 1) % QUEUE_LENGTH;
+		_head = (_head + 1) % _size;
 	}
 private:
 	int _head;
+	int _size;
 	atomic<int> _tail;
 	bool _valid[QUEUE_LENGTH];
 	T _queue[QUEUE_LENGTH];

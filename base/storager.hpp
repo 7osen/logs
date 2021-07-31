@@ -1,36 +1,53 @@
 #pragma once
-#include "memtable.hpp"
 #include <vector>
+#include <thread>
+#include "memtable.hpp"
+#include "lock_free_queue.hpp"
+#include "semaphore.hpp"
 using std::vector;
+using std::thread;
+using std::mutex;
+using std::to_string;
 
 class storager:noncopyable
 {
 public:
 	storager(string filename = "log")
-		:_filenum(1),_filename(Filepath + filename), _mems(std::make_shared<memtable>(_filename))
+		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _mems(new memtable(_filename))
 	{
 		_logFileNames.emplace_back(_filename + ".log0");
 		_indexFileNames.emplace_back(_filename + ".index0");
-
+		restart();
+		_tempnum++;
+		_tempfile = new logfile(_filename + ".temp");
+		startflush();
 	}
 	~storager(){}
-	void Restart();
-	void Set(const message&);
-	void Flush() { _mems->Flush(); }
-	int Get(std::stringstream*,const string&, const string&, const string&);
+	void startflush();
+	void restart();
+	void set(const message&);
+	void flush();
+	int get(std::stringstream*,const string&, const string&, const string&,int num);
 	
 private:
-	void Roll();
+	void roll();
+	void rolltemp();
 	void getFileNum();
 	bool file_exists(const std::string& name);
-	int GetFromFile(std::stringstream*, string, string, const message&, const message&);
-	int find(Logfile*, Logfile*, message, int);
+	int getFromFile(std::stringstream*,const string&,const string&, const message&, const message&,int num);
+	int find(logfile*, logfile*,const message&, int);
 
 	int _filenum;
+	int _tempnow;
+	int _tempnum;
+	logfile* _tempfile;
 	string _filename;
-	shared_ptr<memtable> _mems;
+	memtable* _mems;
+	thread* _thread;
+	semaphore _semaphore;
 	vector<string> _logFileNames;
 	vector<string> _indexFileNames;
+	lock_free_queue<memtable*> _tables;
 };
 
 bool storager::file_exists(const std::string& name) {
@@ -38,19 +55,34 @@ bool storager::file_exists(const std::string& name) {
 	return (stat(name.c_str(), &buffer) == 0);
 }
 
-void storager::Restart()
+void storager::restart()
 {
 	getFileNum();
-	if (file_exists(_filename + ".index0"))
-	{
-		Roll();
-		_mems = std::make_shared<memtable>(_filename);
-	}
-	else _mems->Restart();
+	_mems->restart(_filename + ".temp");
 }
 
+void storager::startflush()
+{
+	_thread = new thread(std::bind(&storager::flush, this));
+	_thread->detach();
+}
 
-void storager::Roll()
+void storager::flush()
+{
+
+	while (1)
+	{
+		_semaphore.wait();
+		memtable* table = _tables.front();
+		table->flush();
+		_tables.pop();
+		_tempnum--;
+		roll();
+	}
+
+}
+
+void storager::roll()
 {
 
 	if (_filenum < MaxFileNum)
@@ -77,24 +109,34 @@ void storager::Roll()
 		newfilename = oldfilename;
 		newindexname = oldindexname;
 	}
+	int j = 0;
+	for (int i = 0; i < _tempnum; i++)
+	{
+		for (; j < _tempnow; j++)
+			if (file_exists(_filename + ".temp" + to_string(j)))
+			{
+				rename((_filename + ".temp" + to_string(j)).c_str(), (_filename + ".temp" + to_string(i)).c_str());
+				break;
+			}
+	}
 }
 
-int storager::find(Logfile* log, Logfile* index, message v,int num)
+int storager::find(logfile* log, logfile* index,const message& v,int num)
 {
 	message val;
 	int l = 1, r = num, mid, offset;
-	index->SetReadPos(sizeof(int) * num);
+	index->setReadPos(sizeof(int) * num);
 	index->Read(offset);
-	log->SetReadPos(offset);
-	log->Read(val._timestamp,val._username,val._topic,val._context);
-	if (v > val) return r * sizeof(int) + 1;
+	log->setReadPos(offset);
+	log->Read(val._timestamp,val._topic,val._context);
+	if (v > val) return (r + 1) * sizeof(int);
 	for (; l < r;)
 	{
 		mid = (l + r) >> 1;
-		index->SetReadPos(sizeof(int) * mid);
+		index->setReadPos(sizeof(int) * mid);
 		index->Read(offset);
-		log->SetReadPos(offset);
-		log->Read(val._timestamp, val._username, val._topic, val._context);
+		log->setReadPos(offset);
+		log->Read(val._timestamp, val._topic, val._context);
 		if (val > v)
 		{
 			r = mid;
@@ -105,40 +147,43 @@ int storager::find(Logfile* log, Logfile* index, message v,int num)
 }
 
 
-int storager::GetFromFile(std::stringstream* ss, string logFilename, string indexFilename, const message& start_time,const message& end_time)
+int storager::getFromFile(std::stringstream* ss,const string& logFilename,const string& indexFilename, const message& start_time,const message& end_time,int num)
 {
-	Logfile log(logFilename);
-	Logfile index(indexFilename);
-	int num = 0,offset = 0,ret = 0;
-	index.Read(num);
-	int begin = find(&log, &index,start_time, num);
-	int end = find(&log, &index, end_time, num);
-	index.SetReadPos(begin);
+	logfile log(logFilename);
+	logfile index(indexFilename);
+	int n = 0,offset = 0,ret = 0;
+	index.Read(n);
+	int begin = find(&log, &index,start_time, n);
+	int end = find(&log, &index, end_time, n);
+	index.setReadPos(begin);
+	index.Read(begin);
+	index.setReadPos(end);
+	index.Read(end);
 	string timestamp;
-	string userid;
 	string topic;
 	string context;
-	for (;index.ReadPos() < end;)
+	log.setReadPos(begin);
+	for (; log.readPos() < end && !log.eof();)
 	{
-		index.Read(offset);
-		log.SetReadPos(offset);
-		log.Read(timestamp, userid, topic, context);
-		log.ReadWrap();
+		if (ret == num) return ret;
 		ret++;
-		*ss << timestamp << "-" << userid << "-" << topic << ": " << context << "\n";
+		log.Read(timestamp, topic, context);
+		*ss << "[" << timestamp << "] [" << topic << "]: " << context << "\n";
 	}
 	return ret;
 }
 
 
-int storager::Get(std::stringstream* ss,const string& username,const string& start_time,const string& end_time)
+int storager::get(std::stringstream* ss,const string& topic,const string& start_time,const string& end_time,int num)
 {
-	message start(start_time, username, "", "");
-	message end(end_time, username, "", "");
-	int ret = _mems->Get(ss, start, end);
-	for (int i = 1; i < _filenum; i++)
+	message start(start_time, topic, "");
+	message end(end_time + "?", topic, "");
+	int ret = 0;
+	ret = _mems->get(ss, start, end,num);
+	for (int i = 1; i < _logFileNames.size(); i++)
 	{
-		ret += GetFromFile(ss, _logFileNames[i], _indexFileNames[i], start, end);
+		if (ret >= num) return ret;
+		ret += getFromFile(ss, _logFileNames[i], _indexFileNames[i], start, end,num - ret);
 	}
 	return ret;
 }
@@ -159,13 +204,19 @@ void storager::getFileNum()
 	}
 }
 
-void storager::Set(const message& m)
+void storager::set(const message& m)
 {
-	_mems->Set(m);
-	if (_mems->Size() > MaxFileSize)
+	_mems->set(m);
+	_tempfile->Write(m._timestamp, m._topic, m._context);
+	_tempfile->flush();
+	if (_tempfile->writePos() > MaxFileSize)
 	{
-		_mems->Close();
-		Roll();
-		_mems = std::make_shared<memtable>(_filename);
+		_tables.push(_mems);
+		_mems = new memtable(_filename);
+		_tempfile->close();
+		rename(_tempfile->name().c_str(), (_filename + ".temp" + std::to_string(_tempnum - 1)).c_str());
+		_tempnum++;
+		_tempfile = new logfile(_filename + ".temp");
+		_semaphore.wakeup();
 	}
 }

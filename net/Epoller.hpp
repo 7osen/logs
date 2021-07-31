@@ -19,11 +19,11 @@ public:
 	Epoller(){_epfd = epoll_create(EPOLL_SIZE);}
 	~Epoller();
 	void epoll(int timeous, vector<Channel*>* activeChannels);
-	void Remove(Channel* channel);
-	void Add(Channel* channel);
+	void remove(Channel* channel);
+	void add(Channel* channel);
 private:
 	void fillActiveChannels(int n, vector<Channel*>* activeChannels);
-	int Update(int op, Channel* channel);
+	int update(int op, Channel* channel);
 
 	int _epfd;
 	epoll_event _events[EPOLL_SIZE] = {};
@@ -44,17 +44,17 @@ void Epoller::epoll(int timeous, vector<Channel*>* activeChannels)
 	fillActiveChannels(n, activeChannels);
 }
 
-void Epoller::Remove(Channel* channel)
+void Epoller::remove(Channel* channel)
 {
-	Update(EPOLL_CTL_DEL, channel);
+	update(EPOLL_CTL_DEL, channel);
 	int fd = channel->fd();
 	_channels.erase(fd);
 }
 
-void Epoller::Add(Channel* channel)
+void Epoller::add(Channel* channel)
 {
 	_channels[channel->fd()] = channel;
-	Update(EPOLL_CTL_ADD, channel);
+	update(EPOLL_CTL_ADD, channel);
 }
 
 void Epoller::fillActiveChannels(int n, vector<Channel*>* activeChannels)
@@ -62,12 +62,12 @@ void Epoller::fillActiveChannels(int n, vector<Channel*>* activeChannels)
 	for (int i = 0; i < n; i++)
 	{
 		Channel* channel = static_cast<Channel*>(_events[i].data.ptr);
-		channel->SetEvents(_events[i].events);
+		channel->setEvents(_events[i].events);
 		activeChannels->push_back(channel);
 	}
 }
 
-int Epoller::Update(int op, Channel* channel)
+int Epoller::update(int op, Channel* channel)
 {
 	epoll_event ev;
 	ev.data.ptr = channel;

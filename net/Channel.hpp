@@ -27,15 +27,15 @@ public:
 	int fd(){return _fd;}
 	uint32_t attention(){return _attention;}
 	void Read();
-	void EnableRead(){_attention |= EPOLLIN;}
-	void DisableRead(){_attention ^= EPOLLIN;}
-	void SetReadCallBack(const CallBack& cb){_ReadCallBack = cb;}
-	void SetCloseCallback(const CallBack& cb){_CloseCallBack = cb;}
-	void SetMessageCallBack(const MessageCallBack& cb){_MessageCallBack = cb;}
+	void enableRead(){_attention |= EPOLLIN;}
+	void disableRead(){_attention ^= EPOLLIN;}
+	void setReadCallBack(const CallBack& cb){_ReadCallBack = cb;}
+	void setCloseCallback(const CallBack& cb){_CloseCallBack = cb;}
+	void setMessageCallBack(const MessageCallBack& cb){_MessageCallBack = cb;}
 	void Write(const char* message,int len){send(_fd, message, len, MSG_DONTWAIT);}
 	void Write(string message){Write(message.c_str(), message.length());}
-	void SetEvents(int events){_event = events;}
-	void HandleEvent();
+	void setEvents(int events){_event = events;}
+	void handleEvent();
 	void recvdata();
 
 private:
@@ -49,7 +49,7 @@ private:
 
 };
 
-void Channel::HandleEvent()
+void Channel::handleEvent()
 {
 	if (_event & _attention & EPOLLIN)
 	{

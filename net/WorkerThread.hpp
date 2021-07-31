@@ -4,31 +4,30 @@
 #include <mutex>
 #include <thread>
 #include "Epoller.hpp"
-#include "TcpConnection.hpp"
 
 
 using std::mutex;
 
-class CellServer
+class WorkerThread
 {
 	typedef std::function<void()> CallBack;
 	typedef function<void(Channel*, Buffer*)> MessageCallBack;
 public:
-	CellServer()
+	WorkerThread()
 		:_quit(false), _epoller(), _connectnums(0){}
-	~CellServer(){ delete _thread; }
+	~WorkerThread(){ delete _thread; }
 	int size(){ return _connectnums;}
 	void close(){ _quit = true;}
 	bool isClosed(){ return !_running;}
 	void start();
-	void SetReadCallBack(CallBack& cb){ _ReadCallBack = cb;}
+	void setReadCallBack(CallBack& cb){ _ReadCallBack = cb;}
 	void setMessageCallBack(const MessageCallBack& cb){ _MessageCallBack = cb;}
 	void addNewClient(int fd);
-	void RemoveChannel(Channel* channel);
+	void removeChannel(Channel* channel);
 
 private:
-	void Update();
-	void Run();
+	void update();
+	void run();
 
 	bool _running;
 	bool _quit;
@@ -42,20 +41,20 @@ private:
 	MessageCallBack _MessageCallBack;
 };
 
-void CellServer::start()
+void WorkerThread::start()
 {
-	_thread = new std::thread(std::bind(&CellServer::Run, this));
+	_thread = new std::thread(std::bind(&WorkerThread::run, this));
 	_thread->detach();
 }
 
-void CellServer::addNewClient(int fd)
+void WorkerThread::addNewClient(int fd)
 {
 	std::lock_guard<mutex> lock(_mutex);
 	_NewClient.push_back(fd);
 	_connectnums++;
 }
 
-void CellServer::RemoveChannel(Channel* channel)
+void WorkerThread::removeChannel(Channel* channel)
 {
 	std::cout << "exit" << std::endl;
 	std::lock_guard<mutex> lock(_mutex);
@@ -63,40 +62,40 @@ void CellServer::RemoveChannel(Channel* channel)
 	_connectnums--;
 }
 
-void CellServer::Update()
+void WorkerThread::update()
 {
 	std::lock_guard<mutex> lock(_mutex);
 	for (auto i : _NewClient)
 	{
 		Channel* channel = new Channel(i);
-		channel->EnableRead();
-		channel->SetCloseCallback(std::bind(&CellServer::RemoveChannel, this, channel));
-		channel->SetMessageCallBack(_MessageCallBack);
-		_epoller.Add(channel);
+		channel->enableRead();
+		channel->setCloseCallback(std::bind(&WorkerThread::removeChannel, this, channel));
+		channel->setMessageCallBack(_MessageCallBack);
+		_epoller.add(channel);
 	}
 	_NewClient.clear();
 
 	for (auto channel : _DeleteChannel)
 	if (channel)
 	{
-		_epoller.Remove(channel);
+		_epoller.remove(channel);
 		delete channel;
 	}
 	_DeleteChannel.clear();
 }
 
-void CellServer::Run()
+void WorkerThread::run()
 {
 	_running = true;
 	vector<Channel*> activeChannels;
 	while (!_quit)
 	{
-		Update();
+		update();
 		activeChannels.clear();
 		_epoller.epoll(1, &activeChannels);
 		for (auto i : activeChannels)
 		{
-			i->HandleEvent();
+			i->handleEvent();
 		}
 	}
 	_running = false;

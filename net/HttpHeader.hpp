@@ -62,7 +62,6 @@ public:
 
 private:
 	void getAttributes();
-
 	void getUrl();
 	void getMethod();
 	void getVersion();

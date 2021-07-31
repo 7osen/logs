@@ -1,7 +1,7 @@
 #pragma once
 #include <thread>
 #include <vector>
-#include "CellServer.hpp"
+#include "WorkerThread.hpp"
 
 #define INVALID_SOCKET			(~0)
 #define SOCKET_ERROR            (-1)
@@ -25,20 +25,9 @@ public:
 
 	void close()
 	{
-		_running = false;
-		for (int i = 0; i < _threadnum; i++)
-		{
-			_servers[i]->close();
-		}
-		for (int i = 0; i < _threadnum; i++)
-		{
-			while (_servers[i]->isClosed())
-			{
-				delete _servers[i];
-			}
-		}
 		::close(_fd);
 		printf("close!!!\n");
+		_running = false;
 	}
 
 	void setMessageCallBack(const MessageCallBack& cb)
@@ -56,7 +45,6 @@ public:
 		bind();
 		startCellserver();
 		listen();
-		_running = true;
 		accept();
 	}
 
@@ -70,10 +58,11 @@ private:
 			int nAddrLen = sizeof(sockaddr_in);
 			int _cSock = INVALID_SOCKET;
 			_cSock = ::accept(_fd, (sockaddr*)&clientAddr, (socklen_t*)&nAddrLen);
+			printf("new client\n");
 			if (_cSock != INVALID_SOCKET)
 			{
-				CellServer* minServer = _servers[0];
-				for (auto server : _servers)
+				WorkerThread* minServer = _threads[0];
+				for (auto server : _threads)
 				{
 					if (server->size() < minServer->size())
 					{
@@ -102,17 +91,17 @@ private:
 	{
 		for (int i = 0; i < _threadnum; i++)
 		{
-			auto cserver = new CellServer();
+			auto cserver = new WorkerThread();
 			if (_MessageCallBack)
 			{
 				cserver->setMessageCallBack(_MessageCallBack);
 			}
-			_servers.push_back(cserver);
+			_threads.push_back(cserver);
 			cserver->start();
 		}
 	}
 
-	void bind()
+	bool bind()
 	{
 		_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		sockaddr_in _sin = {};
@@ -123,10 +112,12 @@ private:
 		if (-1 == retbind)
 		{
 			printf("bind error!\n");
+			return false;
 		}
 		else
 		{
 			printf("bind success! ip = %s ... port = %d \n", inet_ntoa(_sin.sin_addr), _port);
+			_running = true;
 		}
 	}
 
@@ -135,5 +126,5 @@ private:
 	int _fd;
 	int _threadnum;
 	MessageCallBack _MessageCallBack;
-	vector<CellServer*> _servers;
+	vector<WorkerThread*> _threads;
 };
