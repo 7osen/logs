@@ -5,7 +5,7 @@
 #include <string>
 #include <arpa/inet.h>
 
-const size_t BUFFER_SIZE = 40960;
+const size_t BUFFER_SIZE = 409600;
 
 class Buffer
 {

@@ -1,10 +1,12 @@
 #pragma once
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 class semaphore
 {
 public:
 	semaphore()
+		:_wait(0), _wakeup(0)
 	{
 
 	}
@@ -40,9 +42,9 @@ private:
 
 	std::mutex _mutex;
 
-	int _wait = 0;
+	std::atomic<int> _wait;
 
-	int _wakeup = 0;
+	std::atomic<int> _wakeup;
 protected:
 
 };

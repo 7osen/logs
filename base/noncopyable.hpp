@@ -1,10 +1,14 @@
 #pragma once
 class noncopyable
 {
+public:
+	noncopyable(const noncopyable&) = delete;
+	void operator=(const noncopyable&) = delete;
+
+
 protected:
-    noncopyable() {}
-    ~noncopyable() {}
-private:  // emphasize the following members are private
-    noncopyable(const noncopyable&);
-    const noncopyable& operator=(const noncopyable&);
+	noncopyable() = default;
+	~noncopyable() = default;
+
 };
+

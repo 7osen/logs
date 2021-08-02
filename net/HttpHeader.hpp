@@ -33,6 +33,7 @@ public:
 	httpHeader(char* begin, char* end)
 		:_begin(begin),_end(end)
 	{
+		num = 1000;
 		getMethod();
 		getUrl();
 		getVersion();
@@ -42,24 +43,23 @@ public:
 	~httpHeader()
 	{}
 
-	void print()
+/*	const string& get(const string key) const
 	{
-		for (auto attr : _attributes)
-		{
-			std::cout << attr.first << ":" << attr.second << std::endl;
-		}
+//		auto it = _attributes.find(key);
+//		if (it != _attributes.end())
+//			return it->second;
+//		else return "";
 	}
-
-	string get(const string key)
-	{
-		return _attributes[key];
-	}
-
+*/
 	HttpMethod method()
 	{
 		return _method;
 	}
-
+	int num;
+	int datalength = 0;
+	string version;
+	string url;
+	string key;
 private:
 	void getAttributes();
 	void getUrl();
@@ -68,7 +68,7 @@ private:
 
 	char* _begin;
 	char* _end;
-	unordered_map<string, string> _attributes;
+	//map<string, string> _attributes;
 	HttpMethod _method;
 };
 
@@ -100,7 +100,8 @@ void httpHeader::getUrl()
 {
 	char* space = std::find(_begin, _end, ' ');
 	char* next = std::find(_begin, space, '?');
-	_attributes["Url"] = string(_begin, next);
+//	_attributes["Url"] = string(_begin, next);
+	url = string(_begin, next);
 	while (next != space)
 	{
 		_begin = next + 1;
@@ -109,7 +110,7 @@ void httpHeader::getUrl()
 		_begin = next + 1;
 		next = std::find(_begin, space, '&');
 		string val(_begin, next);
-		_attributes[key] = val;
+//		_attributes[key] = val;
 	}
 	_begin = next + 1;
 }
@@ -117,7 +118,8 @@ void httpHeader::getUrl()
 void httpHeader::getVersion()
 {
 	char* next = std::search(_begin, _end, CRLF, CRLF + 2);
-	_attributes["Version"] = string(_begin, next);
+	//_attributes["Version"] = string(_begin, next);
+	version = string(_begin, next);
 	_begin = next + 2;
 }
 
@@ -129,8 +131,12 @@ void httpHeader::getAttributes()
 		string key(_begin, next);
 		_begin = next + 2;
 		next = std::search(_begin, _end, CRLF, CRLF + 2);
-		string val(_begin, next);
-		_attributes[key] = val;
+		if (key == "Content-Length")
+		{
+			string val(_begin, next);
+			datalength = std::stoi(val);
+		}
+//		_attributes[key] = val;
 		_begin = next + 2;
 	}
 }

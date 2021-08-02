@@ -1,6 +1,6 @@
 #pragma once
 #include "../base/storager.hpp"
-#include "../base/lock_free_queue.hpp"
+#include "../base/mq.hpp"
 #include "HttpServer.hpp"
 #include "../base//timecount.hpp"
 #include <atomic>
@@ -17,9 +17,9 @@ public:
 	LogServer(int port,int threadnums = 1)
 		:_server(port, threadnums)
 	{
-		_queue = new lock_free_queue<message>();
+		_queue = new mq<message>();
 		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
-		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
+		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
 	~LogServer()
@@ -40,10 +40,10 @@ public:
 	}
 
 private:
-	void find(string& st, const string& username, const string& begin, const string& end,int num = 10000)
+	void find(string& st, const httpHeader& header)
 	{
 		std::stringstream* ss = new std::stringstream();
-		_storager.get(ss, username, begin, end,num);
+		_storager.get(ss, header.get("topic"), header.get("begin"), header.get("end"), std::stoi(header.get("num")));
 		st = ss->str();
 		delete ss;
 	}
@@ -85,7 +85,7 @@ private:
 	void set(string timestamp, string topic, string context)
 	{
 		message m = message(timestamp,  topic,  context);
-		_queue->push(std::move(m));
+		//_queue->push(std::move(m));
 	}
 
 	void run()
@@ -110,6 +110,6 @@ private:
 	HttpServer _server;
 	storager _storager;
 	std::thread* _thread;
-	lock_free_queue<message>* _queue;
+	mq<message>* _queue;
 };
 

@@ -14,18 +14,19 @@ using std::string;
 using std::fstream;
 using std::ios;
 
-class logfile: noncopyable
+class iofile: noncopyable
 {
 public:
-	logfile(string filename, std::_Ios_Openmode flag = ios::app)
+	iofile(string filename, std::_Ios_Openmode flag = ios::app)
 		:_filename(filename) , _times(0)
 	{
 		_file.open(filename, ios::in | ios::out | ios::binary | flag);
 	}
-	~logfile(){}
+	~iofile(){}
 
 	void Writeline();
 	void flush();
+	void flushnow() { _file.flush(); }
 	void setReadPos(int32_t pos) { _file.seekg(pos); }
 	void setWritePos(int32_t pos) { _file.seekp(pos); }
 	void readWrap() { _file.get(); }
@@ -56,7 +57,7 @@ private:
 	Buffer _buffer;
 };
 
-void logfile::flush()
+void iofile::flush()
 {
 	_times++;
 	if (_times >= EveryFlush)
@@ -67,20 +68,20 @@ void logfile::flush()
 }
 
 template<>
-void logfile::Write(const int& num)
+void iofile::Write(const int& num)
 {
 	_file.write((char*)&num, sizeof(int));
 }
 
 template<>
-void logfile::Write(const size_t& num)
+void iofile::Write(const size_t& num)
 {
 	_file.write((char*)&num, sizeof(size_t));
 	
 }
 
 template<>
-void logfile::Write(const string& st)
+void iofile::Write(const string& st)
 {
 	Write(st.length());
 	_file << st;
@@ -88,38 +89,38 @@ void logfile::Write(const string& st)
 
 
 template<typename T>
-void logfile::Write(const T& value)
+void iofile::Write(const T& value)
 {
 	std::cout << "Invalid para : " << value << std::endl;
 }
 
 template<typename T,typename ...Args>
-void logfile::Write(const T& first,const Args& ... args)
+void iofile::Write(const T& first,const Args& ... args)
 {
 	Write(first);
 	Write(args...);
 
 }
 
-void logfile::Writeline()
+void iofile::Writeline()
 {
 	_file << "\n";
 }
 
 template<>
-void logfile::Read(int& num)
+void iofile::Read(int& num)
 {
 	_file.read((char*)&num, sizeof(int));
 }
 
 template<>
-void logfile::Read(size_t& num)
+void iofile::Read(size_t& num)
 {
 	_file.read((char*)&num, sizeof(size_t));
 }
 
 template<>
-void logfile::Read(string& st)
+void iofile::Read(string& st)
 {
 	size_t len = 0;
 	Read(len);
@@ -128,7 +129,7 @@ void logfile::Read(string& st)
 }
 
 template<>
-void logfile::Read(char*& ch)
+void iofile::Read(char*& ch)
 {
 	size_t len = 0;
 	Read(len);
@@ -136,7 +137,7 @@ void logfile::Read(char*& ch)
 }
 
 template<typename T, typename ...Args>
-void logfile::Read(T& first, Args&... args)
+void iofile::Read(T& first, Args&... args)
 {
 
 	Read(first);
@@ -144,7 +145,7 @@ void logfile::Read(T& first, Args&... args)
 }
 
 template<typename T>
-void logfile::Read(T& value)
+void iofile::Read(T& value)
 {
 	std::cout << "Invalid para: " << value << std::endl;
 }

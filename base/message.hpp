@@ -33,8 +33,7 @@ public:
 	bool operator > (const message& m)
 	{
 		if (_topic != m._topic) return _topic > m._topic;
-		if (_timestamp != m._timestamp) return _timestamp > m._timestamp;
-		return _context > m._context;
+		return _timestamp > m._timestamp;
 	}
 
 	~message()
@@ -57,10 +56,14 @@ private:
 bool operator > (const message& m1,const message& m2)
 {
 	if (m1._topic != m2._topic) return m1._topic > m2._topic;
-	if (m1._timestamp != m2._timestamp) return m1._timestamp > m2._timestamp;
-	return m1._context > m2._context;
+	return m1._timestamp > m2._timestamp;
 }
 
+bool operator < (const message& m1, const message& m2)
+{
+	if (m1._topic != m2._topic) return m1._topic > m2._topic;
+	 return m1._timestamp > m2._timestamp;
+}
 
 //class message
 //{

@@ -3,9 +3,9 @@
 #include <vector>
 #include <map>
 #include <memory.h>
-#include "Channel.hpp"
+#include "Connect.hpp"
 #include <sys/epoll.h>
-#include "../base//noncopyable.hpp"
+#include "../base/noncopyable.hpp"
 
 using std::vector;
 using std::map;
@@ -18,16 +18,16 @@ class Epoller:noncopyable
 public:
 	Epoller(){_epfd = epoll_create(EPOLL_SIZE);}
 	~Epoller();
-	void epoll(int timeous, vector<Channel*>* activeChannels);
-	void remove(Channel* channel);
-	void add(Channel* channel);
+	void epoll(int timeous, vector<Connect*>* activeChannels);
+	void remove(Connect* channel);
+	void add(Connect* channel);
 private:
-	void fillActiveChannels(int n, vector<Channel*>* activeChannels);
-	int update(int op, Channel* channel);
+	void fillActiveChannels(int n, vector<Connect*>* activeChannels);
+	int update(int op, Connect* channel);
 
 	int _epfd;
 	epoll_event _events[EPOLL_SIZE] = {};
-	map<int, Channel*> _channels;
+	map<int, Connect*> _channels;
 };
 
 Epoller::~Epoller()
@@ -38,36 +38,36 @@ Epoller::~Epoller()
 	}
 }
 
-void Epoller::epoll(int timeous, vector<Channel*>* activeChannels)
+void Epoller::epoll(int timeous, vector<Connect*>* activeChannels)
 {
 	int n = epoll_wait(_epfd, _events, EPOLL_SIZE, timeous);
 	fillActiveChannels(n, activeChannels);
 }
 
-void Epoller::remove(Channel* channel)
+void Epoller::remove(Connect* channel)
 {
 	update(EPOLL_CTL_DEL, channel);
 	int fd = channel->fd();
 	_channels.erase(fd);
 }
 
-void Epoller::add(Channel* channel)
+void Epoller::add(Connect* channel)
 {
 	_channels[channel->fd()] = channel;
 	update(EPOLL_CTL_ADD, channel);
 }
 
-void Epoller::fillActiveChannels(int n, vector<Channel*>* activeChannels)
+void Epoller::fillActiveChannels(int n, vector<Connect*>* activeChannels)
 {
 	for (int i = 0; i < n; i++)
 	{
-		Channel* channel = static_cast<Channel*>(_events[i].data.ptr);
+		Connect* channel = static_cast<Connect*>(_events[i].data.ptr);
 		channel->setEvents(_events[i].events);
 		activeChannels->push_back(channel);
 	}
 }
 
-int Epoller::update(int op, Channel* channel)
+int Epoller::update(int op, Connect* channel)
 {
 	epoll_event ev;
 	ev.data.ptr = channel;

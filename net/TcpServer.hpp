@@ -10,13 +10,15 @@ using std::vector;
 
 class TcpServer:noncopyable
 {
-	typedef function<void(Channel*, Buffer*)> MessageCallBack;
+	typedef function<void(Connect*, Buffer*)> MessageCallBack;
 public:
 	TcpServer(int port)
 		:_port(port),
 		_threadnum(1),
 		_running(false)
-	{}
+	{
+		::signal(SIGPIPE, SIG_IGN);
+	}
 
 	~TcpServer()
 	{

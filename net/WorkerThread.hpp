@@ -11,7 +11,7 @@ using std::mutex;
 class WorkerThread
 {
 	typedef std::function<void()> CallBack;
-	typedef function<void(Channel*, Buffer*)> MessageCallBack;
+	typedef function<void(Connect*, Buffer*)> MessageCallBack;
 public:
 	WorkerThread()
 		:_quit(false), _epoller(), _connectnums(0){}
@@ -23,7 +23,7 @@ public:
 	void setReadCallBack(CallBack& cb){ _ReadCallBack = cb;}
 	void setMessageCallBack(const MessageCallBack& cb){ _MessageCallBack = cb;}
 	void addNewClient(int fd);
-	void removeChannel(Channel* channel);
+	void removeChannel(Connect* channel);
 
 private:
 	void update();
@@ -37,7 +37,7 @@ private:
 	Epoller _epoller;
 	std::thread* _thread;
 	vector<int> _NewClient;
-	vector<Channel*> _DeleteChannel;
+	vector<Connect*> _DeleteChannel;
 	MessageCallBack _MessageCallBack;
 };
 
@@ -54,7 +54,7 @@ void WorkerThread::addNewClient(int fd)
 	_connectnums++;
 }
 
-void WorkerThread::removeChannel(Channel* channel)
+void WorkerThread::removeChannel(Connect* channel)
 {
 	std::cout << "exit" << std::endl;
 	std::lock_guard<mutex> lock(_mutex);
@@ -67,7 +67,7 @@ void WorkerThread::update()
 	std::lock_guard<mutex> lock(_mutex);
 	for (auto i : _NewClient)
 	{
-		Channel* channel = new Channel(i);
+		Connect* channel = new Connect(i);
 		channel->enableRead();
 		channel->setCloseCallback(std::bind(&WorkerThread::removeChannel, this, channel));
 		channel->setMessageCallBack(_MessageCallBack);
@@ -78,6 +78,7 @@ void WorkerThread::update()
 	for (auto channel : _DeleteChannel)
 	if (channel)
 	{
+		::close(channel->fd());
 		_epoller.remove(channel);
 		delete channel;
 	}
@@ -87,7 +88,7 @@ void WorkerThread::update()
 void WorkerThread::run()
 {
 	_running = true;
-	vector<Channel*> activeChannels;
+	vector<Connect*> activeChannels;
 	while (!_quit)
 	{
 		update();

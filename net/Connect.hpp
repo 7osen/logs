@@ -6,21 +6,23 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string>
+#include <signal.h>
 #include "../base/buffer.hpp"
 #include "../base//noncopyable.hpp"
+
 
 using std::function;
 using std::string;
 
-class Channel:noncopyable
+class Connect:noncopyable
 {
 	typedef function<void()> CallBack;
-	typedef function<void(Channel*, Buffer*)> MessageCallBack;
+	typedef function<void(Connect*, Buffer*)> MessageCallBack;
 public:
-	Channel(int fd) 
+	Connect(int fd) 
 		:_fd(fd),_attention(EPOLLHUP | EPOLLERR),_buf(new Buffer())
 	{}
-	~Channel()
+	~Connect()
 	{
 		close(_fd);
  	}
@@ -32,11 +34,13 @@ public:
 	void setReadCallBack(const CallBack& cb){_ReadCallBack = cb;}
 	void setCloseCallback(const CallBack& cb){_CloseCallBack = cb;}
 	void setMessageCallBack(const MessageCallBack& cb){_MessageCallBack = cb;}
-	void Write(const char* message,int len){send(_fd, message, len, MSG_DONTWAIT);}
+	void Write(const char* message,int len)
+	{
+		send(_fd, message, len,MSG_DONTWAIT|MSG_NOSIGNAL);
+	}
 	void Write(string message){Write(message.c_str(), message.length());}
 	void setEvents(int events){_event = events;}
 	void handleEvent();
-	void recvdata();
 
 private:
 	int _fd;
@@ -49,7 +53,7 @@ private:
 
 };
 
-void Channel::handleEvent()
+void Connect::handleEvent()
 {
 	if (_event & _attention & EPOLLIN)
 	{
@@ -62,7 +66,7 @@ void Channel::handleEvent()
 	_event = 0;
 }
 
-void Channel::Read( )
+void Connect::Read( )
 {
 	int n = _buf->readFD(fd());
 	if (n > 0)

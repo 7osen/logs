@@ -2,15 +2,16 @@
 
 #include <atomic>
 #include "noncopyable.hpp"
+#include "semaphore.hpp"
 using std::atomic;
 
-const int QUEUE_LENGTH = 204800;
+const int QUEUE_LENGTH = 40960;
 
 template<typename T>
-class lock_free_queue:noncopyable
+class mq:noncopyable
 {
 public:
-	lock_free_queue(int size = QUEUE_LENGTH) :_size(size),_head(0), _tail(0)
+	mq(int size = QUEUE_LENGTH) :_size(size),_head(0), _tail(0)
 	{
 		for (int i = 0; i < size; i++)
 		{
@@ -18,16 +19,16 @@ public:
 		}
 	}
 
-	~lock_free_queue()
+	~mq()
 	{
 
 	}
 
 	void push(const T& val)
 	{
-		int next = (_tail + 1) % _size;
-		while (next == _head);
 		int old = _tail;
+		int next = (old + 1) % _size;
+		while (next == _head);
 		while (!_tail.compare_exchange_weak(old, next))
 		{
 			next = (old + 1) % _size;
@@ -36,10 +37,12 @@ public:
 
 		_queue[old] = val;
 		_valid[old] = true;
+		_semaphore.wakeup();
 	}
 
 	T& front()
 	{
+		_semaphore.wait();
 		while (_head == _tail);
 		while (!_valid[_head]);
 		return _queue[_head];
@@ -54,6 +57,7 @@ private:
 	int _head;
 	int _size;
 	atomic<int> _tail;
+	semaphore _semaphore;
 	bool _valid[QUEUE_LENGTH];
 	T _queue[QUEUE_LENGTH];
 };

@@ -8,7 +8,7 @@ using std::stringstream;
 class HttpServer:noncopyable
 {
 	typedef std::function<void(char*, char*)> CallBack;
-	typedef std::function<void(string&,const string&, const string&, const string&,int)> GetCallBack;
+	typedef std::function<void(string&,const httpHeader&)> GetCallBack;
 public:
 	HttpServer(int port = 8000,int threadnum = 1)
 		:_server(port)
@@ -45,7 +45,7 @@ public:
 
 private:
 
-	void onMessage(Channel* conn, Buffer* buf)
+	void onMessage(Connect* conn, Buffer* buf)
 	{
 		char* begin = buf->begin();
 		char* end = get_http_header_end(buf->begin(), buf->end());
@@ -53,9 +53,8 @@ private:
 		{
 			httpHeader header(begin, end);
 			end = end + 4;
-			string len = header.get("Content-Length");
-			int dataLength = 0;
-			if (len != "")	 dataLength = std::stoi(len);
+
+			int dataLength = header.datalength;
 			if (buf->end() - end >= dataLength)
 			{
 				string response = "";
@@ -68,9 +67,9 @@ private:
 				else if (header.method() == HttpMethod::GET)
 				{
 					if (_GetCallBack)
-					_GetCallBack(response,header.get("topic"), header.get("begin"), header.get("end"),stoi(header.get("num")));
+					_GetCallBack(response,header);
 				}
-				onRequest(conn, header.get("Version"), response);
+				onRequest(conn, header.version, response);
 				buf->addReadpos(dataLength);
 				
 			}
@@ -80,7 +79,7 @@ private:
 		buf->reset();
 	}
 
-	void onRequest(Channel* conn,const string& version, const string& st)
+	void onRequest(Connect* conn,const string& version, const string& st)
 	{
 		stringstream ss;
 		int l = st.length();
