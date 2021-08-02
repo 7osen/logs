@@ -13,7 +13,7 @@ class logfile:noncopyable
 {
 public:
 	logfile(const string& name,const string& max_time,const string& min_time)
-		:_basename(Filepath + name),_max_time(max_time),_min_time(min_time)
+		:_basename(name),_max_time(max_time),_min_time(min_time)
 	{}
 	~logfile(){}
 	const string& max_time() { return _max_time; }

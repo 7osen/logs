@@ -5,6 +5,8 @@
 
 using std::stringstream;
 
+const string NotContent = "HTTP/1.1 204 NotContent\r\n\r\n";
+
 class HttpServer:noncopyable
 {
 	typedef std::function<void(char*, char*)> CallBack;
@@ -53,7 +55,6 @@ private:
 		{
 			httpHeader header(begin, end);
 			end = end + 4;
-
 			int dataLength = header.datalength;
 			if (buf->end() - end >= dataLength)
 			{
@@ -70,8 +71,7 @@ private:
 					_GetCallBack(response,header);
 				}
 				onRequest(conn, header.version, response);
-				buf->addReadpos(dataLength);
-				
+				buf->addReadpos(dataLength);				
 			}
 			else break;
 			begin = buf->begin();
@@ -81,17 +81,21 @@ private:
 
 	void onRequest(Connect* conn,const string& version, const string& st)
 	{
-		stringstream ss;
 		int l = st.length();
-		if (l == 0) 
-			ss << version << " " << "204 NotContent\r\n\r\n";
-		else 
+		if (l == 0)
+		{
+			conn->Write(NotContent.c_str(), NotContent.length());
+		}
+		else
+		{
+			ss.str("");
 			ss << version << " " << "200 OK\r\nContent-Length: " << l << "\r\n\r\n" << st;
-		//std::cout << ss.str() << std::endl;
-		conn->Write(ss.str());
+			conn->Write(ss.str());
+		}
 	}
 
 	TcpServer _server;
+	stringstream ss;
 	CallBack _PostCallBack;
 	GetCallBack _GetCallBack;
 };

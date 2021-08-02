@@ -6,7 +6,7 @@
 #include <functional>
 
 template<typename K, typename V>
-class Node
+class Node:noncopyable
 {
 
 public:
@@ -56,6 +56,27 @@ private:
     int _element_count;
     Node<K, V>* _header;
 };
+
+template<typename K, typename V>
+SkipList<K, V>::SkipList()
+{
+
+    this->_max_level = 16;
+    this->_skip_list_level = 0;
+    this->_element_count = 0;
+    this->_header = new Node<K, V>(_max_level);
+};
+
+template<typename K, typename V>
+SkipList<K, V>::~SkipList()
+{
+    for (Node<K, V>* header = _header; header != nullptr;)
+    {
+        auto next = header->next();
+        delete header;
+        header = next;
+    }
+}
 
 template<typename K, typename V>
 Node<K, V>* SkipList<K, V>::create_node(const K& k, const V& v, int level) 
@@ -130,22 +151,7 @@ Node<K,V>* SkipList<K, V>::find(const K& key)
     
     return current;
 }
-template<typename K, typename V>
-SkipList<K, V>::SkipList() 
-{
 
-    this->_max_level = 16;
-    this->_skip_list_level = 0;
-    this->_element_count = 0;
-    this->_header = new Node<K, V>(_max_level);
-};
-
-template<typename K, typename V>
-SkipList<K, V>::~SkipList() 
-{
- 
-    delete _header;
-}
 
 
 template<typename K, typename V>

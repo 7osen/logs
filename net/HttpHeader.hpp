@@ -43,14 +43,6 @@ public:
 	~httpHeader()
 	{}
 
-/*	const string& get(const string key) const
-	{
-//		auto it = _attributes.find(key);
-//		if (it != _attributes.end())
-//			return it->second;
-//		else return "";
-	}
-*/
 	HttpMethod method()
 	{
 		return _method;
@@ -60,6 +52,9 @@ public:
 	string version;
 	string url;
 	string key;
+	string topic;
+	string begin;
+	string end;
 private:
 	void getAttributes();
 	void getUrl();

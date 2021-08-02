@@ -37,12 +37,12 @@ public:
 
 		_queue[old] = val;
 		_valid[old] = true;
-		_semaphore.wakeup();
+		//_semaphore.wakeup();
 	}
 
 	T& front()
 	{
-		_semaphore.wait();
+		//_semaphore.wait();
 		while (_head == _tail);
 		while (!_valid[_head]);
 		return _queue[_head];

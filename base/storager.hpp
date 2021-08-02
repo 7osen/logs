@@ -12,31 +12,29 @@ using std::to_string;
 class storager:noncopyable
 {
 public:
-	storager(string filename = "log")
-		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename),_mems(new memtable(getTimenow()))
+	storager(const string& filename = "log")
+		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename)
 	{
-		restart();
-		_tempnum++;
-		_tempfile = new iofile(_filename + ".temp");
-		startflush();
+
 	}
-	~storager(){}
+	void set(const message&);
+	int get(std::stringstream*,const string&, const string&, const string&,int num);
+	virtual ~storager() {}
+protected:
+	void flush();
 	void startflush();
 	void restart();
-	void set(const message&);
-	void flush();
-	int get(std::stringstream*,const string&, const string&, const string&,int num);
-	
-private:
 	void roll();
-	int getFromFile(std::stringstream*,const string&,const string&, const message&, const message&,int num);
-	int find(iofile*, iofile*,const message&, int);
+
+	virtual memtable* createMemtable() = 0;
+	virtual int getFromFile(std::stringstream*, const string&, const string&, const message&, const message&, int num) = 0;
+	
+	iofile* _tempfile;
+	memtable* _mems;
 	int _filenum;
 	int _tempnow;
 	int _tempnum;
-	iofile* _tempfile;
 	string _filename;
-	memtable* _mems;
 	semaphore _sem;
 	thread* _thread;
 	logfileManager _lfmanager;
@@ -88,70 +86,19 @@ void storager::roll()
 	}
 }
 
-int storager::find(iofile* log, iofile* index,const message& v,int num)
-{
-	message val;
-	int l = 1, r = num, mid, offset;
-	index->setReadPos(sizeof(int) * num);
-	index->Read(offset);
-	log->setReadPos(offset);
-	log->Read(val._timestamp,val._topic);
-	if (v > val) return (r + 1) * sizeof(int);
-	for (; l < r;)
-	{
-		mid = (l + r) >> 1;
-		index->setReadPos(sizeof(int) * mid);
-		index->Read(offset);
-		log->setReadPos(offset);
-		log->Read(val._timestamp, val._topic);
-		if (v > val)
-		{
-			l = mid + 1;
-		}
-		else r = mid;
-	}
-	return r * sizeof(int) ;
-}
-
-
-int storager::getFromFile(std::stringstream* ss,const string& logFilename,const string& indexFilename, const message& start_time,const message& end_time,int num)
-{
-	iofile log(logFilename);
-	iofile index(indexFilename);
-	int n = 0,offset = 0,ret = 0;
-	index.Read(n);
-	int begin = find(&log, &index,start_time, n);
-	int end = find(&log, &index, end_time, n);
-	index.setReadPos(begin);
-	index.Read(begin);
-	index.setReadPos(end);
-	index.Read(end);
-	string timestamp;
-	string topic;
-	string context;
-	log.setReadPos(begin);
-	for (; log.readPos() < end && !log.eof();)
-	{
-		if (ret == num) return ret;
-		ret++;
-		log.Read(timestamp, topic, context);
-		*ss << "[" << timestamp << "] [" << topic << "]: " << context << "\n";
-	}
-	return ret;
-}
-
-
 int storager::get(std::stringstream* ss,const string& topic,const string& start_time,const string& end_time,int num)
 {
 	message start(start_time, topic, "");
 	message end(end_time + "?", topic, "");
 	int ret = 0;
-	ret = _mems->get(ss, start, end,num);
 	for (auto it = _lfmanager.begin(); it != _lfmanager.end(); it++)
-	{
-		if (ret >= num) return ret;
-		ret += getFromFile(ss, (*it)->datafilename(), (*it)->indexfilename(), start, end,num - ret);
-	}
+		if (((*it)->min_time() >= start_time && (*it)->min_time() <= (end_time + "?")) 
+			|| ((*it)->max_time() >= start_time && (*it)->max_time() <= (end_time + "?")))
+		{
+			ret += getFromFile(ss, (*it)->datafilename(), (*it)->indexfilename(), start, end,num - ret);
+			if (ret >= num) return ret;
+		}
+	ret += _mems->get(ss, start, end,num - ret);
 	return ret;
 }
 
@@ -167,7 +114,7 @@ void storager::set(const message& m)
 		_tempnum++;
 		_tempfile = new iofile(_filename + ".temp");
 		_tables.push(_mems);
-		_mems = new memtable(getTimenow());
+		_mems = createMemtable();
 		_sem.wakeup();
 	}
 }

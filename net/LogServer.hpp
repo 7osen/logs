@@ -1,5 +1,5 @@
 #pragma once
-#include "../base/storager.hpp"
+#include "../base/plaintableStorager.hpp"
 #include "../base/mq.hpp"
 #include "HttpServer.hpp"
 #include "../base//timecount.hpp"
@@ -17,6 +17,7 @@ public:
 	LogServer(int port,int threadnums = 1)
 		:_server(port, threadnums)
 	{
+		_storager = new plaintableStorager();
 		_queue = new mq<message>();
 		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
@@ -24,7 +25,7 @@ public:
 
 	~LogServer()
 	{
-
+		delete _storager;
 	}
 
 	void start()
@@ -43,7 +44,7 @@ private:
 	void find(string& st, const httpHeader& header)
 	{
 		std::stringstream* ss = new std::stringstream();
-		_storager.get(ss, header.get("topic"), header.get("begin"), header.get("end"), std::stoi(header.get("num")));
+		//_storager.get(ss, header.get("topic"), header.get("begin"), header.get("end"), std::stoi(header.get("num")));
 		st = ss->str();
 		delete ss;
 	}
@@ -85,7 +86,7 @@ private:
 	void set(string timestamp, string topic, string context)
 	{
 		message m = message(timestamp,  topic,  context);
-		//_queue->push(std::move(m));
+		_queue->push(std::move(m));
 	}
 
 	void run()
@@ -101,14 +102,14 @@ private:
 				count = 0;
 				t.Update();
 			}
-			_storager.set(_queue->front());
+			_storager->set(_queue->front());
 			count++;
 			_queue->pop();
 		}
 	}
 
 	HttpServer _server;
-	storager _storager;
+	storager* _storager;
 	std::thread* _thread;
 	mq<message>* _queue;
 };

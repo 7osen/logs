@@ -29,24 +29,23 @@ class memtable:noncopyable
 {
 public:
 
-	memtable(string name)
+	memtable(const string& name)
 		:_num(0), _name(Filepath + name),_dataFilename(_name + ".log"), _indexFilename (_name + ".index"),_offset(0),_max_time(""),_min_time("")
 	{}
 
-	~memtable(){}
 
 	const string& name() { return _name; }
 	void set(const message&);
 	void flush();
-	void close();
 	void restart(const string&);
-	void writeIndex();
-	void writeData();
-	int log(const message&);
 	const string& max_time() { return _max_time; }
 	const string& min_time() { return _min_time; }
 	int get(std::stringstream*, const message&, const message&,int);
-private:
+	
+	virtual ~memtable() {}
+	virtual void writeData() = 0;
+	virtual void writeIndex() = 0;
+protected:
 	int _num;
 	int _offset;
 	string _name;
@@ -56,11 +55,6 @@ private:
 	string _indexFilename;
 	SkipList<message, int32_t> _sortlist;
 };
-
-void memtable::close()
-{
-	writeIndex();
-}
 
 
 void memtable::restart(const string& file)
@@ -85,33 +79,6 @@ void memtable::flush()
 	writeIndex();
 }
 
-void memtable::writeData()
-{
-	iofile datafile(_dataFilename, ios::trunc);
-	for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
-	{
-		it->value = _offset;
-		_offset += it->key.length();
-		datafile.Write(it->key._timestamp,it->key._topic,it->key._context);
-	}
-	datafile.close();
-}
-
-void memtable::writeIndex()
-{
-	string filename = _indexFilename + "w";
-	iofile indexfile(filename,ios::trunc);
-	indexfile.Write(_num);
-	for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
-	{
-		indexfile.Write(it->value);
-	}
-	indexfile.Write(_offset);
-	indexfile.close();
-	rename(filename.c_str(), _indexFilename.c_str());
-}
-
-
 int memtable::get(std::stringstream* ss,const message& start_message, const message& end_message,int num)
 {
 	auto start = _sortlist.find(start_message);
@@ -128,9 +95,10 @@ int memtable::get(std::stringstream* ss,const message& start_message, const mess
 
 void memtable::set(const message& m)
 {
-	if (_max_time == "")
+	if (_num == 0)
 	{
-		_max_time = _min_time = m._timestamp;
+		_max_time = m._timestamp;
+		_min_time = m._timestamp;
 	}
 	if (m._timestamp > _max_time) 
 		_max_time = m._timestamp;
@@ -138,11 +106,4 @@ void memtable::set(const message& m)
 		_min_time = m._timestamp;
 	_sortlist.push_back(m, 0);
 	_num++;
-}
-
-int memtable::log(const message& m)
-{
-	//_logfile.Write(m._timestamp, m._topic, m._context);
-	//_logfile.flush();
-	return 0;
 }

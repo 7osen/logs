@@ -38,7 +38,7 @@ public:
 	{
 		send(_fd, message, len,MSG_DONTWAIT|MSG_NOSIGNAL);
 	}
-	void Write(string message){Write(message.c_str(), message.length());}
+	void Write(const string& message){Write(message.c_str(), message.length());}
 	void setEvents(int events){_event = events;}
 	void handleEvent();
 
