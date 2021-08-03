@@ -6,13 +6,7 @@ class plaintableStorager:public storager
 public:
 	plaintableStorager(const string& name = "log")
 		:storager(name)
-	{
-		_mems = createMemtable();
-		restart();
-		_tempnum++;
-		_tempfile = new iofile(_filename + ".temp");
-		startflush();
-	}
+	{}
 	~plaintableStorager()
 	{
 		delete _mems;
@@ -24,10 +18,10 @@ private:
 		return new plainmemtable(getTimenow());
 	}
 
-	int getFromFile(std::stringstream* ss, const string& logFilename, const string& indexFilename, const message& start_time, const message& end_time, int num)
+	int getFromFile(std::stringstream* ss,logfile* file, const message& start_time, const message& end_time, int num)
 	{
-		iofile log(logFilename);
-		iofile index(indexFilename);
+		iofile log(file->datafilename());
+		iofile index(file->indexfilename());
 		int n = 0, offset = 0, ret = 0;
 		index.Read(n);
 		int begin = find(&log, &index, start_time, n);

@@ -32,8 +32,11 @@ public:
 
 	bool operator > (const message& m)
 	{
-		if (_topic != m._topic) return _topic > m._topic;
-		return _timestamp > m._timestamp;
+		int ret = _topic.compare(m._topic);
+		if (ret == 0)
+			return _timestamp > m._timestamp;
+		else
+			return ret > 0;
 	}
 
 	~message()
@@ -55,14 +58,20 @@ private:
 
 bool operator > (const message& m1,const message& m2)
 {
-	if (m1._topic != m2._topic) return m1._topic > m2._topic;
-	return m1._timestamp > m2._timestamp;
+	int ret = m1._topic.compare(m2._topic);
+	if (ret == 0)
+		return m1._timestamp > m2._timestamp;
+	else 
+		return ret > 0;
 }
 
 bool operator < (const message& m1, const message& m2)
 {
-	if (m1._topic != m2._topic) return m1._topic > m2._topic;
-	 return m1._timestamp > m2._timestamp;
+	int ret = m1._topic.compare(m2._topic);
+	if (ret == 0)
+		return m1._timestamp > m2._timestamp;
+	else
+		return ret > 0;
 }
 
 //class message

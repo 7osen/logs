@@ -30,7 +30,7 @@ class memtable:noncopyable
 public:
 
 	memtable(const string& name)
-		:_num(0), _name(Filepath + name),_dataFilename(_name + ".log"), _indexFilename (_name + ".index"),_offset(0),_max_time(""),_min_time("")
+		:_num(0), _name(Filepath + name),_dataFilename(_name + ".data"), _indexFilename (_name + ".index"),_offset(0),_max_time(""),_min_time("")
 	{}
 
 
@@ -43,9 +43,10 @@ public:
 	int get(std::stringstream*, const message&, const message&,int);
 	
 	virtual ~memtable() {}
+protected:
 	virtual void writeData() = 0;
 	virtual void writeIndex() = 0;
-protected:
+
 	int _num;
 	int _offset;
 	string _name;

@@ -16,11 +16,13 @@ public:
 		:_basename(name),_max_time(max_time),_min_time(min_time)
 	{}
 	~logfile(){}
+	bool inCache(){	return _inCache;	}
 	const string& max_time() { return _max_time; }
 	const string& min_time() { return _min_time; }
 	string indexfilename() { return _basename + ".index";}
 	string datafilename() { return _basename + ".data";}
 	string basename() { return _basename; }
+
 private:
 	bool _inCache;
 	string _basename;
@@ -57,7 +59,7 @@ public:
 		{
 			 metadata.Read(basename, min_time, max_time);
 			 if (file_exists(basename + ".index"))
-				push_back(new logfile(basename, min_time, max_time));
+				 _files.emplace_back(new logfile(basename, min_time, max_time));
 		}
 		metadata.close();
 	}

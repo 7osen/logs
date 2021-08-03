@@ -1,5 +1,6 @@
 #pragma once
 #include "../base/plaintableStorager.hpp"
+#include "../base/blocktableStorager.hpp"
 #include "../base/mq.hpp"
 #include "HttpServer.hpp"
 #include "../base//timecount.hpp"
@@ -17,8 +18,9 @@ public:
 	LogServer(int port,int threadnums = 1)
 		:_server(port, threadnums)
 	{
-		_storager = new plaintableStorager();
 		_queue = new mq<message>();
+		_storager = new blocktableStorager();
+		_storager->start();
 		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
@@ -43,10 +45,14 @@ public:
 private:
 	void find(string& st, const httpHeader& header)
 	{
+
+		TimeCount t;
+		t.Update();
 		std::stringstream* ss = new std::stringstream();
-		//_storager.get(ss, header.get("topic"), header.get("begin"), header.get("end"), std::stoi(header.get("num")));
+		_storager->get(ss, header.topic, header.begin, header.end, header.num);
 		st = ss->str();
 		delete ss;
+		std::cout << t.getMircoSec() << std::endl;
 	}
 
 	void onMessage(char* begin, char* end)
@@ -92,16 +98,16 @@ private:
 	void run()
 	{
 		int count = 0;
-		TimeCount t;
-		t.Update();
+		//TimeCount t;
+		//t.Update();
 		while (1)
 		{
-			if (t.getSecond() > 1.0)
+			/*if (t.getSecond() > 1.0)
 			{
 				printf("%d\n", count);
 				count = 0;
 				t.Update();
-			}
+			}*/
 			_storager->set(_queue->front());
 			count++;
 			_queue->pop();
