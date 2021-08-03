@@ -59,7 +59,7 @@ private:
 			if (buf->end() - end >= dataLength)
 			{
 				string response = "";
-				buf->addReadpos(end - begin);
+				buf->eat(end - begin);
 				if (header.method() == HttpMethod::POST)
 				{
 					if (_PostCallBack) 
@@ -68,10 +68,10 @@ private:
 				else if (header.method() == HttpMethod::GET)
 				{
 					if (_GetCallBack)
-					_GetCallBack(response,header);
+						_GetCallBack(response,header);
 				}
 				onRequest(conn, header.version, response);
-				buf->addReadpos(dataLength);				
+				buf->eat(dataLength);				
 			}
 			else break;
 			begin = buf->begin();
@@ -84,13 +84,14 @@ private:
 		int l = st.length();
 		if (l == 0)
 		{
-			conn->Write(NotContent.c_str(), NotContent.length());
+			conn->Write_Dontwait(NotContent.c_str(), NotContent.length());
 		}
 		else
 		{
 			ss.str("");
-			ss << version << " " << "200 OK\r\nContent-Length: " << l << "\r\n\r\n" << st;
+			ss << version << " " << "200 OK\r\nContent-Length: " << l << "\r\n\r\n";
 			conn->Write(ss.str());
+			conn->Write(st);
 		}
 	}
 

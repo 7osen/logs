@@ -14,6 +14,7 @@
 #include "setting.hpp"
 #include "message.hpp"
 #include "noncopyable.hpp"
+#include "matcher.hpp"
 
 using std::string;
 using std::vector;
@@ -40,7 +41,7 @@ public:
 	void restart(const string&);
 	const string& max_time() { return _max_time; }
 	const string& min_time() { return _min_time; }
-	int get(std::stringstream*, const message&, const message&,int);
+	int get(matcher* match, const message& start_message, const message& end_message, int num);
 	
 	virtual ~memtable() {}
 protected:
@@ -80,15 +81,15 @@ void memtable::flush()
 	writeIndex();
 }
 
-int memtable::get(std::stringstream* ss,const message& start_message, const message& end_message,int num)
+
+int memtable::get(matcher* match, const message& start_message, const message& end_message, int num)
 {
 	auto start = _sortlist.find(start_message);
 	auto end = _sortlist.find(end_message);
 	int ret = 0;
 	for (auto it = start; it != end; it = it->next())
 	{
-		ret++;
-		*ss << "[" << it->key._timestamp  << "] [" << it->key._topic << "]: " << it->key._context << "\n";
+		ret += match->match(it->key);
 		if (ret == num) return ret;
 	}
 	return ret;

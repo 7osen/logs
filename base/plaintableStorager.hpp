@@ -18,7 +18,7 @@ private:
 		return new plainmemtable(getTimenow());
 	}
 
-	int getFromFile(std::stringstream* ss,logfile* file, const message& start_time, const message& end_time, int num)
+	int getFromFile(matcher* match, logfile* file, const message& start_time, const message& end_time, int num)
 	{
 		iofile log(file->datafilename());
 		iofile index(file->indexfilename());
@@ -37,9 +37,8 @@ private:
 		for (; log.readPos() < end && !log.eof();)
 		{
 			if (ret == num) return ret;
-			ret++;
 			log.Read(timestamp, topic, context);
-			*ss << "[" << timestamp << "] [" << topic << "]: " << context << "\n";
+			ret += match->match(message(timestamp, topic, context));
 		}
 		return ret;
 	}

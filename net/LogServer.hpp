@@ -49,7 +49,7 @@ private:
 		TimeCount t;
 		t.Update();
 		std::stringstream* ss = new std::stringstream();
-		_storager->get(ss, header.topic, header.begin, header.end, header.num);
+		_storager->get(ss, header.topic, header.begin, header.end, header.num,header.searchkey);
 		st = ss->str();
 		delete ss;
 		std::cout << t.getMircoSec() << std::endl;

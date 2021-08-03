@@ -81,7 +81,7 @@ private:
 		return blocks;
 	}
 
-	int getFromFile(std::stringstream* ss, logfile* file, const message& begin, const message& end, int num)
+	int getFromFile(matcher* match, logfile* file, const message& begin, const message& end, int num)
 	{
 		BlocksPtr blocks = getBlocks(file);
 		iofile* datafile = new iofile(file->datafilename());
@@ -92,9 +92,8 @@ private:
 		int ret = 0;
 		while (!datafile->eof() && datafile->readPos() < endOffset)
 		{
-			ret++;
 			datafile->Read(timestamp, topic, context);
-			*ss << "[" << timestamp << "] [" << topic << "]: " << context << "\n";
+			ret += match->match(message(timestamp, topic, context));
 			if (ret == num) return ret;
 		}
 		return ret;

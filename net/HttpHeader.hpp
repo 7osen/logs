@@ -27,7 +27,7 @@ class httpHeader
 {
 public:
 	httpHeader(char* begin, char* end)
-		:_begin(begin),_end(end)
+		:_begin(begin),_end(end),searchkey("")
 	{
 		num = 1000;
 		getMethod();
@@ -47,7 +47,7 @@ public:
 	int datalength = 0;
 	string version;
 	string url;
-	string key;
+	string searchkey;
 	string topic;
 	string begin;
 	string end;
@@ -116,7 +116,7 @@ void httpHeader::getUrl()
 		}
 		else if (key == "key")
 		{
-			key = string(_begin, next);
+			searchkey = string(_begin, next);
 		}
 	}
 	_begin = next + 1;

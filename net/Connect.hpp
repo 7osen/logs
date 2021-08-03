@@ -36,9 +36,14 @@ public:
 	void setMessageCallBack(const MessageCallBack& cb){_MessageCallBack = cb;}
 	void Write(const char* message,int len)
 	{
-		send(_fd, message, len,MSG_DONTWAIT|MSG_NOSIGNAL);
+		send(_fd, message, len,MSG_NOSIGNAL);
+	}
+	void Write_Dontwait(const char* message, int len)
+	{
+		send(_fd, message, len, MSG_NOSIGNAL|MSG_DONTWAIT);
 	}
 	void Write(const string& message){Write(message.c_str(), message.length());}
+	void Write_Dontwait(const string& message) { Write_Dontwait(message.c_str(), message.length()); }
 	void setEvents(int events){_event = events;}
 	void handleEvent();
 
