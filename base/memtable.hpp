@@ -39,8 +39,8 @@ public:
 	void set(const message&);
 	void flush();
 	void restart(const string&);
-	const string& max_time() { return _max_time; }
-	const string& min_time() { return _min_time; }
+	const Timestamp& max_time() { return _max_time; }
+	const Timestamp& min_time() { return _min_time; }
 	int get(matcher* match, const message& start_message, const message& end_message, int num);
 	
 	virtual ~memtable() {}
@@ -51,8 +51,8 @@ protected:
 	int _num;
 	int _offset;
 	string _name;
-	string _max_time;
-	string _min_time;
+	Timestamp _max_time;
+	Timestamp _min_time;
 	string _dataFilename;
 	string _indexFilename;
 	SkipList<message, int32_t> _sortlist;
@@ -61,7 +61,7 @@ protected:
 
 void memtable::restart(const string& file)
 {
-	string timestamp;
+	Timestamp timestamp;
 	string topic;
 	string context;
 	iofile tempfile(file);
@@ -104,7 +104,7 @@ void memtable::set(const message& m)
 	}
 	if (m._timestamp > _max_time) 
 		_max_time = m._timestamp;
-	if (m._timestamp < _min_time)
+	if (_min_time > m._timestamp)
 		_min_time = m._timestamp;
 	_sortlist.push_back(m, 0);
 	_num++;

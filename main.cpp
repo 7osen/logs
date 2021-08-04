@@ -22,6 +22,17 @@ void cmd(LogServer* l)
 	l->close();
 }
 
+string randomst(int n)
+{
+	string ret = "";
+	for (; n--;)
+	{
+		ret += ('a' + random() % 26);
+		srand(rand());
+	}
+	return ret;
+}
+
 void storager_test()
 {
 	storager* s = new blocktableStorager();
@@ -31,10 +42,8 @@ void storager_test()
 	int num = 0;
 	for (;;)
 	{
-		for (int i = 1; i <= 10000; i++)
 		{
-
-		message m(getTimenow(), "topic" + to_string(random() % 5), to_string(random() % 5) + to_string(random() % 10) + to_string(random() % 3));
+		message m(getTimenow(),"topic" + to_string(random()%10),randomst(random()%10));
 		s->set(m);
 		num++;
 		if (t.getSecond() > 1.0)
@@ -44,17 +53,16 @@ void storager_test()
 			num = 0;
 			}
 		}
-		sleep(1);
 	}
 }
 
 int main()
 {	
 	LogServer ls(8000,2);
-	//thread t(storager_test);
+//	thread t(storager_test);
 	thread t(cmd, &ls);
 	t.detach();
 	ls.start();
-	//int a;
+//	int a;
 	//scanf("%d", &a);
 }	

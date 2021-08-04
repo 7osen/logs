@@ -42,7 +42,8 @@ private:
 		if (r < 0) return 0;
 		file->setReadPos(blocks->at(r).offset);
 		int offset = file->readPos();
-		string timestamp, topic, context;
+		string  topic, context;
+		Timestamp timestamp;
 		for (; !file->eof();)
 		{
 			file->Read(timestamp, topic, context);
@@ -70,10 +71,11 @@ private:
 			for (; !indexfile.eof();)
 			{
 				Block block;
-				string topic,timestamp;
+				string topic;
+				Timestamp timestamp;
 				indexfile.Read(topic, timestamp, block.offset);
 				block.topic = new string(topic);
-				block.timestamp = new string(timestamp);
+				block.timestamp = new Timestamp(timestamp);
 				blocks->push_back(std::move(block));
 			}
 			_lru.push(file->basename(), blocks);
@@ -88,7 +90,8 @@ private:
 		int beginOffset = find(datafile, blocks, begin);
 		int endOffset = find(datafile, blocks, end);
 		datafile->setReadPos(beginOffset);
-		string timestamp, topic, context;
+		string  topic, context;
+		Timestamp timestamp;
 		int ret = 0;
 		while (!datafile->eof() && datafile->readPos() < endOffset)
 		{

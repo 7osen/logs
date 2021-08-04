@@ -3,7 +3,7 @@
 struct Block
 {
 	string* topic;
-	string* timestamp;
+	Timestamp* timestamp;
 	int offset;
 };
 class blockmemtable:public memtable

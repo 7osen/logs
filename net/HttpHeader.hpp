@@ -109,6 +109,7 @@ void httpHeader::getUrl()
 		else if (key == "end")
 		{
 			end = string(_begin, next);
+			end[end.length() - 1]++;
 		}
 		else if (key == "num")
 		{

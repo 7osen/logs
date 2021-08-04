@@ -89,7 +89,7 @@ public:
     }
     int match(const message& m) {
         int p = 0, repeat = 0;
-        if (_autoAc[0].sum == 0)
+        if (_autoAc.size() > 1)
             for (int i = 0; i < m._context.length(); i++)
             {
                 p = _autoAc[p].next[(int)(m._context[i])];

@@ -30,7 +30,7 @@ private:
 		index.Read(begin);
 		index.setReadPos(end);
 		index.Read(end);
-		string timestamp;
+		Timestamp timestamp;
 		string topic;
 		string context;
 		log.setReadPos(begin);

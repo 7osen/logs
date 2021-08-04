@@ -8,6 +8,7 @@
 #include "noncopyable.hpp"
 #include "buffer.hpp"
 #include "setting.hpp"
+#include "message.hpp"
 
 using std::ostream;
 using std::string;
@@ -87,6 +88,12 @@ void iofile::Write(const string& st)
 	_file << st;
 }
 
+template<>
+void iofile::Write(const Timestamp& t)
+{
+	Write(t.day,t.hour_min_sec,t.microseconds);
+}
+
 
 template<typename T>
 void iofile::Write(const T& value)
@@ -126,6 +133,14 @@ void iofile::Read(string& st)
 	Read(len);
 	_file.read(_buffer.begin(), len);
 	st.assign(_buffer.begin(), len);
+}
+
+template<>
+void iofile::Read(Timestamp& t)
+{
+	int d = 0, hms = 0, ms = 0;
+	Read(d, hms, ms);
+	t.assign(d, hms, ms);
 }
 
 template<>

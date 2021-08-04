@@ -12,13 +12,13 @@ using std::string;
 class logfile:noncopyable
 {
 public:
-	logfile(const string& name,const string& max_time,const string& min_time)
+	logfile(const string& name,const Timestamp& max_time,const Timestamp& min_time)
 		:_basename(name),_max_time(max_time),_min_time(min_time)
 	{}
 	~logfile(){}
 	bool inCache(){	return _inCache;	}
-	const string& max_time() { return _max_time; }
-	const string& min_time() { return _min_time; }
+	const Timestamp& max_time() { return _max_time; }
+	const Timestamp& min_time() { return _min_time; }
 	string indexfilename() { return _basename + ".index";}
 	string datafilename() { return _basename + ".data";}
 	string basename() { return _basename; }
@@ -26,8 +26,8 @@ public:
 private:
 	bool _inCache;
 	string _basename;
-	string _max_time;
-	string _min_time;
+	Timestamp _max_time;
+	Timestamp _min_time;
 };
 
 
@@ -52,8 +52,8 @@ public:
 	void restart()
 	{
 		string basename;
-		string min_time;
-		string max_time;
+		Timestamp min_time;
+		Timestamp max_time;
 		iofile metadata(Filepath + "metafile.data");
 		while (!metadata.eof())
 		{

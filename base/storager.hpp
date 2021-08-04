@@ -22,7 +22,7 @@ public:
 	}
 	void start();
 	void set(const message&);
-	int get(std::stringstream* ss, const string& topic, const string& start_time, const string& end_time, int num, const string& key);
+	int get(std::stringstream* ss, const string& topic, const string& start_time,const string& end_time, int num, const string& key);
 	virtual ~storager() {}
 protected:
 	void flush();
@@ -110,14 +110,15 @@ int storager::get(std::stringstream* ss, const string& topic, const string& star
 {
 	matcher match(key);
 	message start(start_time, topic, "");
-	message end(end_time + "?", topic, "");
+	message end(end_time , topic, "");
 	match.setStringstream(ss);
 	int ret = 0;
 	if (num > 100000) num = 100000;
 	std::lock_guard<mutex> lock(_findmutex);
 	for (auto it = _lfmanager.begin(); it != _lfmanager.end(); it++)
-		if (((*it)->min_time() >= start_time && (*it)->min_time() <= (end_time + "?"))
-			|| ((*it)->max_time() >= start_time && (*it)->max_time() <= (end_time + "?")))
+		if ((*it)->min_time() > (end_time) || (*it)->max_time() < start_time) 
+			continue;
+		else 
 		{
 			ret += getFromFile(&match, *it, start, end, num - ret);
 			if (ret >= num) return ret;
