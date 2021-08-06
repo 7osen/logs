@@ -98,7 +98,7 @@ void iofile::Write(const Timestamp& t)
 template<typename T>
 void iofile::Write(const T& value)
 {
-	std::cout << "Invalid para : " << value << std::endl;
+	std::cout << "Invalid param : " << value << std::endl;
 }
 
 template<typename T,typename ...Args>

@@ -60,7 +60,6 @@ private:
 			int dataLength = header->datalength;
 			if (buf->end() - end >= dataLength)
 			{
-				string response = "";
 				buf->eat(end - begin);
 				if (header->method() == HttpMethod::POST)
 				{

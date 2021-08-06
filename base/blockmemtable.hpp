@@ -39,7 +39,7 @@ private:
 			block.timestamp = &(it->key._timestamp);
 			_offset += it->key.length();
 			datafile.Write(it->key._timestamp, it->key._topic, it->key._context);
-			if (i == 16)
+			if (i == BlockSize)
 			{
 				_blocks->push_back(block);
 				i = 0;

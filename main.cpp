@@ -32,18 +32,18 @@ void storager_test()
 	int num = 0;
 	for (;;)
 	{
+		Timestamp t1(getTimenow());
+		message m(t1,"topic" + to_string(t1.microseconds%10), to_string(t1.microseconds));
 		for (int i = 1; i <= 10000; i++)
 		{
-			Timestamp t1(getTimenow());
-			message m(t1,"topic" + to_string(t1.microseconds%10), to_string(t1.microseconds));
 		//	message m(getTimenow(), "t", "dasf");
 		s->set(m);
 		num++;
 		if (t.getSecond() > 1.0)
 			{
-			t.Update();
-			printf("%d\n", num);
-			num = 0;
+				t.Update();
+				printf("%d\n", num);
+				num = 0;
 			}
 		}
 	}
@@ -51,11 +51,11 @@ void storager_test()
 
 int main()
 {	
-	LogServer ls(8000,2);
-	//thread t(storager_test);
-	thread t(cmd, &ls);
+	//LogServer ls(8000,2);
+	thread t(storager_test);
+	//thread t(cmd, &ls);
 	t.detach();
-	ls.start();
-	//int a;
-	//scanf("%d", &a);
+	//ls.start();
+	int a;
+	scanf("%d", &a);
 }	

@@ -89,6 +89,7 @@ void WorkerThread::run()
 {
 	_running = true;
 	vector<Connect*> activeChannels;
+	activeChannels.reserve(1024);
 	while (!_quit)
 	{
 		update();

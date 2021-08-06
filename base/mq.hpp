@@ -28,11 +28,11 @@ public:
 	{
 		int old = _tail;
 		int next = (old + 1) % _size;
-		while (next == _head);
+		while (next == _head) sleep(1);
 		while (!_tail.compare_exchange_weak(old, next))
 		{
 			next = (old + 1) % _size;
-			while (next == _head);
+			while (next == _head) sleep(1);
 		}
 
 		_queue[old] = val;
