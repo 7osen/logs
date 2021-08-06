@@ -68,9 +68,12 @@ public:
 		_files.emplace_back(file);
 		if (_files.size() > MaxFileNum)
 		{
-			remove((*begin())->datafilename().c_str());
-			remove((*begin())->indexfilename().c_str());
-			_files.erase(_files.begin());
+			for (int i = 0; i < MaxFileNum / 5; i++)
+			{
+				remove((*begin())->datafilename().c_str());
+				remove((*begin())->indexfilename().c_str());
+				_files.erase(_files.begin());
+			}
 			rewrite();
 		}
 		else

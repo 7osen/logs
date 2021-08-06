@@ -24,15 +24,20 @@ public:
 
 private:
 
+	void memchange(memtable* table)
+	{
+		_lru.push(table->name(),dynamic_cast<blockmemtable*>(table)->getBlocks());
+	}
+
 	int find(iofile* file, const BlocksPtr& blocks,const message& v)
 	{
 		int l = 0;
 		int r = blocks->size() - 1;
-
+		string st("1");
 		for (; l < r;)
 		{
 			int mid = (l + r) >> 1;
-			message m(*(blocks->at(mid).timestamp), *(blocks->at(mid).topic), "");
+			message m(*(blocks->at(mid).timestamp), *(blocks->at(mid).topic),st);
 			if (v > m)
 			{
 				l = mid + 1;

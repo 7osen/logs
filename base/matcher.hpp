@@ -32,9 +32,10 @@ public:
         _autoAc.emplace_back(newNode);
         for (auto begin = key.begin(); begin < key.end(); )
         {
-            auto next = std::find(begin, key.end(), '-');
-            build(string(key.begin(), next));
-            begin = ++next;
+            auto next = std::find(begin, key.end(), '|');
+            build(string(begin, next));
+            next++;
+            begin = next;
         }
         fail();
 	}

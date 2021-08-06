@@ -30,6 +30,7 @@ protected:
 	void resetmem();
 	void roll();
 
+	virtual void memchange(memtable*) = 0;
 	virtual memtable* createMemtable() = 0;
 	virtual int getFromFile(matcher*, logfile*, const message&, const message&, int num) = 0;
 
@@ -73,11 +74,12 @@ void storager::flush()
 		_sem.wait();
 		memtable* table = _tables.front();
 		table->flush();
+	
+		memchange(table);
 		{
 			std::lock_guard<mutex> lock(_findmutex);
 			_lfmanager.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
 			{
-				std::lock_guard<mutex> lock(_insertmutex);
 				if (_lastmems == table) 
 				_lastmems = nullptr;
 			}
@@ -91,18 +93,15 @@ void storager::flush()
 
 void storager::roll()
 {
-	int j = 0;
-	for (int i = 0; i < _tempnum; i++)
+	remove((_filename + ".temp0" ) .c_str());
+	for (int i = 1; i < _tempnum; i++)
 	{
-		for (; j < _tempnow; j++)
-		{
 			struct stat file;
-			if (stat((_filename + ".temp" + to_string(j)).c_str(), &file) == 0)
+			if (stat((_filename + ".temp" + to_string(i)).c_str(), &file) == 0)
 			{
-				rename((_filename + ".temp" + to_string(j)).c_str(), (_filename + ".temp" + to_string(i)).c_str());
+				rename((_filename + ".temp" + to_string(i)).c_str(), (_filename + ".temp" + to_string(i - 1)).c_str());
 				break;
 			}
-		}
 	}
 }
 

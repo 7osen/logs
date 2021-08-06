@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <memory>
 #include "iofile.hpp"
+#include "lruCache.hpp"
 #include "skiplist.hpp"
 #include "setting.hpp"
 #include "message.hpp"

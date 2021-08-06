@@ -22,28 +22,21 @@ void cmd(LogServer* l)
 	l->close();
 }
 
-string randomst(int n)
-{
-	string ret = "";
-	for (; n--;)
-	{
-		ret += ('a' + random() % 26);
-		srand(rand());
-	}
-	return ret;
-}
 
 void storager_test()
 {
-	storager* s = new blocktableStorager();
+	storager* s = new plaintableStorager();
 	s->start();
 	TimeCount t;
 	t.Update();
 	int num = 0;
 	for (;;)
 	{
+		for (int i = 1; i <= 10000; i++)
 		{
-		message m(getTimenow(),"topic" + to_string(random()%10),randomst(random()%10));
+			Timestamp t1(getTimenow());
+			message m(t1,"topic" + to_string(t1.microseconds%10), to_string(t1.microseconds));
+		//	message m(getTimenow(), "t", "dasf");
 		s->set(m);
 		num++;
 		if (t.getSecond() > 1.0)
@@ -58,11 +51,11 @@ void storager_test()
 
 int main()
 {	
-	LogServer ls(8000,2);
-//	thread t(storager_test);
-	thread t(cmd, &ls);
+	//LogServer ls(8000,2);
+	thread t(storager_test);
+	//thread t(cmd, &ls);
 	t.detach();
-	ls.start();
-//	int a;
-	//scanf("%d", &a);
+	//ls.start();
+	int a;
+	scanf("%d", &a);
 }	

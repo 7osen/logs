@@ -1,5 +1,9 @@
 #pragma once
 #include "memtable.hpp"
+#include <memory>
+
+using std::shared_ptr;
+
 struct Block
 {
 	string* topic;
@@ -10,10 +14,16 @@ class blockmemtable:public memtable
 {
 public:
 	blockmemtable(const string& name)
-		:memtable(name)
-	{}
+		:memtable(name),_blocks(std::make_shared<vector<Block> >())
+	{
+	}
 	~blockmemtable()
 	{}
+
+	shared_ptr<vector<Block>> getBlocks()
+	{
+		return _blocks;
+	}
 
 private:
 	void writeData()
@@ -31,12 +41,12 @@ private:
 			datafile.Write(it->key._timestamp, it->key._topic, it->key._context);
 			if (i == 16)
 			{
-				_blocks.push_back(block);
+				_blocks->push_back(block);
 				i = 0;
 				block.offset = _offset;
 			}
 		}
-		if (i != 0) _blocks.push_back(block);
+		if (i != 0) _blocks->push_back(block);
 		datafile.close();
 	}
 
@@ -44,7 +54,7 @@ private:
 	{
 		string filename = _indexFilename + "w";
 		iofile indexfile(filename, ios::trunc);
-		for (auto it = _blocks.begin(); it != _blocks.end(); it++)
+		for (auto it = _blocks->begin(); it != _blocks->end(); it++)
 		{
 			indexfile.Write(*(it->topic),*(it->timestamp),it->offset);
 		}
@@ -52,5 +62,5 @@ private:
 		rename(filename.c_str(), _indexFilename.c_str());
 	}
 
-	vector<Block> _blocks;
+	shared_ptr<vector<Block>> _blocks;
 };

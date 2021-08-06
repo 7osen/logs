@@ -64,13 +64,14 @@ private:
 				{
 					if (_PostCallBack) 
 						_PostCallBack(buf->begin(), buf->begin() + dataLength);
+					conn->Write_Dontwait(NotContent.c_str(), NotContent.length());
 				}
 				else if (header.method() == HttpMethod::GET)
 				{
 					if (_GetCallBack)
 						_GetCallBack(response,header);
+					onRequest(conn, header.version, response);
 				}
-				onRequest(conn, header.version, response);
 				buf->eat(dataLength);				
 			}
 			else break;
@@ -84,7 +85,7 @@ private:
 		int l = st.length();
 		if (l == 0)
 		{
-			conn->Write_Dontwait(NotContent.c_str(), NotContent.length());
+
 		}
 		else
 		{

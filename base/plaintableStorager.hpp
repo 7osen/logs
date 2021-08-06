@@ -17,7 +17,8 @@ private:
 	{
 		return new plainmemtable(getTimenow());
 	}
-
+	void memchange(memtable*)
+	{}
 	int getFromFile(matcher* match, logfile* file, const message& start_time, const message& end_time, int num)
 	{
 		iofile log(file->datafilename());

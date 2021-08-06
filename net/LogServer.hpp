@@ -2,8 +2,9 @@
 #include "../base/plaintableStorager.hpp"
 #include "../base/blocktableStorager.hpp"
 #include "../base/mq.hpp"
-#include "HttpServer.hpp"
 #include "../base//timecount.hpp"
+#include "../base/writer.hpp"
+#include "HttpServer.hpp"
 #include <atomic>
 
 const char* TIMESTRING = "time";
@@ -18,22 +19,23 @@ public:
 	LogServer(int port,int threadnums = 1)
 		:_server(port, threadnums)
 	{
-		_queue = new mq<message>();
-		_storager = new blocktableStorager();
+
+		_storager = new plaintableStorager();
 		_storager->start();
+		_writer = new writer(_storager);
+		_writer->start();
 		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
 	~LogServer()
 	{
+		delete _writer;
 		delete _storager;
 	}
 
 	void start()
 	{
-		_thread = new std::thread(std::bind(&LogServer::run, this));
-		_thread->detach();
 		_server.start();
 	}
 
@@ -45,7 +47,6 @@ public:
 private:
 	void find(string& st, const httpHeader& header)
 	{
-
 		TimeCount t;
 		t.Update();
 		std::stringstream* ss = new std::stringstream();
@@ -78,7 +79,7 @@ private:
 			}
 			begin = next + 1;
 		}
-		set(timestamp, topic, context);
+		_writer->set(timestamp, topic, context);
 	}
 	bool strcmp(char* ch, int len, const char* src)
 	{
@@ -89,34 +90,9 @@ private:
 		return true;
 	}
 
-	void set(string timestamp, string topic, string context)
-	{
-		message m = message(timestamp,  topic,  context);
-		_queue->push(std::move(m));
-	}
-
-	void run()
-	{
-		int count = 0;
-		//TimeCount t;
-		//t.Update();
-		while (1)
-		{
-			/*if (t.getSecond() > 1.0)
-			{
-				printf("%d\n", count);
-				count = 0;
-				t.Update();
-			}*/
-			_storager->set(_queue->front());
-			count++;
-			_queue->pop();
-		}
-	}
-
 	HttpServer _server;
 	storager* _storager;
-	std::thread* _thread;
-	mq<message>* _queue;
+	std::thread* _writerThread;
+	writer* _writer;
 };
 

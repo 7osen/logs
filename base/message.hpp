@@ -28,6 +28,7 @@ struct Timestamp
 		for (int i = 18;  i < st.length(); i++) microseconds = microseconds * 10 + (st[i] - '0');
 		hour_min_sec = hour * 10000 + min * 100 + sec;
 	}
+
 	Timestamp(const Timestamp& t)
 		:day(t.day),hour(t.hour),min(t.min),sec(t.sec),microseconds(t.microseconds),hour_min_sec(t.hour_min_sec),length(t.length)
 	{}

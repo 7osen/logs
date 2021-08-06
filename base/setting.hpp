@@ -9,4 +9,4 @@ const int MaxFileNum = 50;
 
 const int EveryFlush = 10;
 
-const int LruCacheSize = 16;
+const int LruCacheSize = 24;
