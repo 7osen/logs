@@ -5,7 +5,7 @@
 #include "timecount.hpp"
 #include "memtable.hpp"
 #include "mq.hpp"
-#include "file_manager.hpp"
+#include "metadata.hpp"
 using std::vector;
 using std::mutex;
 using std::thread;
@@ -46,7 +46,7 @@ protected:
 	thread* _thread;
 	mutex _findmutex;
 	mutex _insertmutex;
-	logfileManager _lfmanager;
+	metadata _metadata;
 	mq<memtable*> _tables;
 };
 
@@ -54,7 +54,7 @@ protected:
 void storager::start()
 {
 	_mems = createMemtable();
-	_lfmanager.restart();
+	_metadata.restart();
 	_mems->restart(_filename + ".temp");
 	_tempnum++;
 	_tempfile = new iofile(_filename + ".temp");
@@ -78,7 +78,7 @@ void storager::flush()
 		memchange(table);
 		{
 			std::lock_guard<mutex> lock(_findmutex);
-			_lfmanager.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
+			_metadata.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
 			{
 				if (_lastmems == table) 
 				_lastmems = nullptr;
@@ -114,7 +114,7 @@ int storager::get(std::stringstream* ss, const string& topic, const string& star
 	int ret = 0;
 	if (num > 100000) num = 100000;
 	std::lock_guard<mutex> lock(_findmutex);
-	for (auto it = _lfmanager.begin(); it != _lfmanager.end(); it++)
+	for (auto it = _metadata.begin(); it != _metadata.end(); it++)
 		if ((*it)->min_time() > (end_time) || (*it)->max_time() < start_time) 
 			continue;
 		else 

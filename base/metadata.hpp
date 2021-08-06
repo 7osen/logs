@@ -33,14 +33,14 @@ private:
 
 
 
-class logfileManager
+class metadata
 {
 	typedef vector<logfile*>::iterator Iterator;
 public:
-	logfileManager()
+	metadata()
 	{
 	}
-	~logfileManager()
+	~metadata()
 	{
 	}
 
