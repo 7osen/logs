@@ -4,13 +4,15 @@
 #include "HttpHeader.hpp"
 
 using std::stringstream;
+using std::shared_ptr;
 
 const string NotContent = "HTTP/1.1 204 NotContent\r\n\r\n";
+const string response = "HTTP/1.1 200 OK\r\nContent-Length: ";
 
 class HttpServer:noncopyable
 {
 	typedef std::function<void(char*, char*)> CallBack;
-	typedef std::function<void(string&,const httpHeader&)> GetCallBack;
+	typedef std::function<void(Connect*, shared_ptr<httpHeader>)> GetCallBack;
 public:
 	HttpServer(int port = 8000,int threadnum = 1)
 		:_server(port)
@@ -53,24 +55,23 @@ private:
 		char* end = get_http_header_end(buf->begin(), buf->end());
 		for (; end != buf->end(); end = get_http_header_end(buf->begin(), buf->end()))
 		{
-			httpHeader header(begin, end);
+			shared_ptr<httpHeader> header(new httpHeader(begin, end));
 			end = end + 4;
-			int dataLength = header.datalength;
+			int dataLength = header->datalength;
 			if (buf->end() - end >= dataLength)
 			{
 				string response = "";
 				buf->eat(end - begin);
-				if (header.method() == HttpMethod::POST)
+				if (header->method() == HttpMethod::POST)
 				{
 					if (_PostCallBack) 
 						_PostCallBack(buf->begin(), buf->begin() + dataLength);
 					conn->Write_Dontwait(NotContent.c_str(), NotContent.length());
 				}
-				else if (header.method() == HttpMethod::GET)
+				else if (header->method() == HttpMethod::GET)
 				{
 					if (_GetCallBack)
-						_GetCallBack(response,header);
-					onRequest(conn, header.version, response);
+						_GetCallBack(conn,header);
 				}
 				buf->eat(dataLength);				
 			}
@@ -80,21 +81,6 @@ private:
 		buf->reset();
 	}
 
-	void onRequest(Connect* conn,const string& version, const string& st)
-	{
-		int l = st.length();
-		if (l == 0)
-		{
-
-		}
-		else
-		{
-			ss.str("");
-			ss << version << " " << "200 OK\r\nContent-Length: " << l << "\r\n\r\n";
-			conn->Write(ss.str());
-			conn->Write(st);
-		}
-	}
 
 	TcpServer _server;
 	stringstream ss;

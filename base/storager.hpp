@@ -16,7 +16,7 @@ class storager:noncopyable
 {
 public:
 	storager(const string& filename = "log")
-		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _lastmems(nullptr)
+		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _lastmems(nullptr), _tables(100)
 	{
 
 	}

@@ -4,6 +4,7 @@
 #include "../base/mq.hpp"
 #include "../base//timecount.hpp"
 #include "../base/writer.hpp"
+#include "../base/reader.hpp"
 #include "HttpServer.hpp"
 #include <atomic>
 
@@ -21,16 +22,18 @@ public:
 	{
 
 		_storager = new plaintableStorager();
-		_storager->start();
 		_writer = new writer(_storager);
+		_reader = new reader(_storager);
 		_writer->start();
+		_reader->start();
+		_storager->start();
 		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
 	~LogServer()
 	{
-		delete _writer;
+
 		delete _storager;
 	}
 
@@ -45,15 +48,9 @@ public:
 	}
 
 private:
-	void find(string& st, const httpHeader& header)
+	void find(Connect* conn, shared_ptr<httpHeader> header)
 	{
-		TimeCount t;
-		t.Update();
-		std::stringstream* ss = new std::stringstream();
-		_storager->get(ss, header.topic, header.begin, header.end, header.num,header.searchkey);
-		st = ss->str();
-		delete ss;
-		std::cout << t.getMircoSec() << std::endl;
+		_reader->query(conn, header);
 	}
 
 	void onMessage(char* begin, char* end)
@@ -90,9 +87,10 @@ private:
 		return true;
 	}
 
-	HttpServer _server;
 	storager* _storager;
-	std::thread* _writerThread;
 	writer* _writer;
+	reader* _reader;
+	std::thread* _writerThread;
+	HttpServer _server;
 };
 

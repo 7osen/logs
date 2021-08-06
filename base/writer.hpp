@@ -8,9 +8,9 @@ class writer:noncopyable
 {
 public:
 	writer(storager* st)
-		:_storager(st)
+		:_storager(st),_queue(new mq<message>(QUEUE_LENGTH))
 	{
-		_queue = new mq<message>();
+
 	}
 
 	void start()

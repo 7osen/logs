@@ -4,15 +4,17 @@
 #include "../net/HttpServer.hpp"
 using std::shared_ptr;
 
+
+
 struct searchRequest
 {
-	shared_ptr<Connect> connect;
-	httpHeader* header;
+	Connect* connect;
+	shared_ptr<httpHeader> header;
 	searchRequest()
 	{
 
 	}
-	searchRequest(shared_ptr<Connect> conn, httpHeader* h)
+	searchRequest(Connect* conn, shared_ptr<httpHeader> h)
 	{
 		connect = conn;
 		header = h;
@@ -23,12 +25,12 @@ class reader
 {
 public:
 	reader(storager* st)
-		:_storager(st),_queue()
+		:_storager(st),_queue(10)
 	{
 
 	}
 
-	void query(shared_ptr<Connect> conn, httpHeader* header)
+	void query(Connect* conn, shared_ptr<httpHeader> header)
 	{
 		_queue.push(searchRequest(conn, header));
 		_s.wakeup();
@@ -48,19 +50,21 @@ public:
 private:
 	void run()
 	{
-		std::stringstream* ss = new std::stringstream();
+		std::stringstream ss;
+		std::stringstream ssparam;
 		for (;;)
 		{
 			_s.wait();
 			searchRequest request = _queue.front();
 			TimeCount t;
 			t.Update();
-			_storager->get(ss, request.header->topic, request.header->begin, request.header->end, request.header->num, request.header->searchkey);
-			request.connect->Write(ss->str());
-			delete ss;
+			_storager->get(&ssparam, request.header->topic, request.header->begin, request.header->end, request.header->num, request.header->searchkey);
+			ss << response << ssparam.str().length() << "\r\n\r\n" << ssparam.str();
+			request.connect->Write(ss.str());
 			std::cout << t.getMircoSec() << std::endl;
 			_queue.pop();
-			ss->str("");
+			ss.str("");
+			ssparam.str("");
 		}
 	}
 
