@@ -18,11 +18,7 @@ public:
 	storager(const string& filename = "log")
 		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _lastmems(nullptr), _tables(100)
 	{
-		_mems = createMemtable();
-		_metadata.restart();
-		_mems->restart(_filename + ".temp");
-		_tempnum++;
-		_tempfile = new iofile(_filename + ".temp");
+		
 	}
 	void start();
 	void set(const message&);
@@ -34,6 +30,7 @@ protected:
 	void resetmem();
 	void roll();
 
+	virtual void restart() = 0;
 	virtual void memchange(memtable*) = 0;
 	virtual memtable* createMemtable() = 0;
 	virtual int getFromFile(matcher*, logfile*, const message&, const message&, int num) = 0;
@@ -55,9 +52,16 @@ protected:
 };
 
 
+
+
 void storager::start()
 {
-	
+	_mems = createMemtable();
+	_metadata.restart();
+	restart();
+	_mems->restart(_filename + ".temp");
+	_tempnum++;
+	_tempfile = new iofile(_filename + ".temp");
 	startflush();
 }
 

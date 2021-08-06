@@ -17,11 +17,7 @@ public:
 	blocktableStorager(const string& name = "log")
 		:storager(name)
 	{
-		if (_metadata.size() > 0)
-		for (auto it = max(_metadata.end() - LruCacheSize, _metadata.begin()); it != _metadata.end(); it++)
-		{
-			getBlocks(*it);
-		}
+
 	}
 	~blocktableStorager()
 	{
@@ -33,6 +29,15 @@ private:
 	void memchange(memtable* table)
 	{
 		_lru.push(table->name(),dynamic_cast<blockmemtable*>(table)->getBlocks());
+	}
+
+	void restart()
+	{
+		if (_metadata.size() > 0)
+			for (auto it = max(_metadata.end() - LruCacheSize, _metadata.begin()); it != _metadata.end(); it++)
+			{
+				getBlocks(*it);
+			}
 	}
 
 	int find(iofile* file, const BlocksPtr& blocks,const message& v)

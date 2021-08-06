@@ -19,6 +19,8 @@ private:
 	}
 	void memchange(memtable*)
 	{}
+	void restart()
+	{}
 	int getFromFile(matcher* match, logfile* file, const message& start_time, const message& end_time, int num)
 	{
 		iofile log(file->datafilename());

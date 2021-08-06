@@ -113,10 +113,10 @@ public:
         if (repeat > 0) 
         {
             *_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
-            if (size == 0) *_ss << "next start time :" << m._timestamp;
+            if (_size == 0) *_ss << "next start time :" << m._timestamp;
             return 1;
         }
-        if (size == 0) *_ss << "next start time :" << m._timestamp;
+        if (_size == 0) *_ss << "next start time :" << m._timestamp;
         return 0;
     }
  
