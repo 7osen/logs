@@ -18,7 +18,11 @@ public:
 	storager(const string& filename = "log")
 		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _lastmems(nullptr), _tables(100)
 	{
-
+		_mems = createMemtable();
+		_metadata.restart();
+		_mems->restart(_filename + ".temp");
+		_tempnum++;
+		_tempfile = new iofile(_filename + ".temp");
 	}
 	void start();
 	void set(const message&);
@@ -35,12 +39,12 @@ protected:
 	virtual int getFromFile(matcher*, logfile*, const message&, const message&, int num) = 0;
 
 	
-	iofile* _tempfile;
-	memtable* _mems;
-	memtable* _lastmems;
 	int _filenum;
 	int _tempnow;
 	int _tempnum;
+	iofile* _tempfile;
+	memtable* _mems;
+	memtable* _lastmems;
 	string _filename;
 	semaphore _sem;
 	thread* _thread;
@@ -53,11 +57,7 @@ protected:
 
 void storager::start()
 {
-	_mems = createMemtable();
-	_metadata.restart();
-	_mems->restart(_filename + ".temp");
-	_tempnum++;
-	_tempfile = new iofile(_filename + ".temp");
+	
 	startflush();
 }
 
@@ -120,13 +120,13 @@ int storager::get(std::stringstream* ss, const string& topic, const string& star
 		else 
 		{
 			ret += getFromFile(&match, *it, start, end, num - ret);
-			if (ret >= num) return ret;
+			if (ret >= num || match.size() <= 0) return ret;
 		}
 	{
 		std::lock_guard<mutex> lock(_insertmutex);
-		if (ret >= num) return ret;
+		if (ret >= num || match.size() <= 0) return ret;
 		if (_lastmems != nullptr) ret += _lastmems->get(&match, start, end, num - ret);
-		if (ret >= num) return ret;
+		if (ret >= num || match.size() <= 0) return ret;
 		ret += _mems->get(&match, start, end, num - ret);
 	}
 }

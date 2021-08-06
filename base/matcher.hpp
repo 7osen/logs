@@ -26,7 +26,7 @@ struct autoAcNode {
 class matcher
 {
 public:
-	matcher(string key = "")
+	matcher(string key = "",int size = MatchTimes)
 	{
         autoAcNode newNode;
         _autoAc.emplace_back(newNode);
@@ -43,6 +43,11 @@ public:
 	{
 
 	}
+
+    int size()
+    {
+        return _size;
+    }
 
     void setStringstream(stringstream* ss)
     {
@@ -90,6 +95,7 @@ public:
     }
     int match(const message& m) {
         int p = 0, repeat = 0;
+        _size--;
         if (_autoAc.size() > 1)
             for (int i = 0; i < m._context.length(); i++)
             {
@@ -103,18 +109,21 @@ public:
             }
         else 
             repeat = 1;
+
         if (repeat > 0) 
         {
             *_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
+            if (size == 0) *_ss << "next start time :" << m._timestamp;
             return 1;
         }
+        if (size == 0) *_ss << "next start time :" << m._timestamp;
         return 0;
     }
  
 
 private:
     int _cnt;
+    int _size;
     stringstream* _ss;
     vector<autoAcNode> _autoAc;
-    vector<message> _messages;
 };

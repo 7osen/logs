@@ -44,6 +44,11 @@ public:
 	{
 	}
 
+	int size()
+	{
+		return _files.size();
+	}
+
 	bool file_exists(const string& name) {
 		struct stat file;
 		return (stat(name.c_str(), &file) == 0);

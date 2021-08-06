@@ -32,11 +32,11 @@ void storager_test()
 	int num = 0;
 	for (;;)
 	{
-		Timestamp t1(getTimenow());
-		message m(t1,"topic" + to_string(t1.microseconds%10), to_string(t1.microseconds));
 		for (int i = 1; i <= 10000; i++)
 		{
 		//	message m(getTimenow(), "t", "dasf");
+	Timestamp t1(getTimenow());
+	message m(t1,"topic" + to_string(t1.microseconds%10), to_string(t1.microseconds));
 		s->set(m);
 		num++;
 		if (t.getSecond() > 1.0)

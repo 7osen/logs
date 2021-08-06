@@ -16,7 +16,13 @@ class blocktableStorager:public storager
 public:
 	blocktableStorager(const string& name = "log")
 		:storager(name)
-	{}
+	{
+		if (_metadata.size() > 0)
+		for (auto it = max(_metadata.end() - LruCacheSize, _metadata.begin()); it != _metadata.end(); it++)
+		{
+			getBlocks(*it);
+		}
+	}
 	~blocktableStorager()
 	{
 		delete _mems;
