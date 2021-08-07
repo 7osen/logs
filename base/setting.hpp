@@ -7,12 +7,12 @@ const long MaxFileSize = 1024 * 1024 * 1024;
 
 const int MaxFileNum = 80;
 
-const int EveryFlush = 10;
+const int EveryFlush = 16;
 
 const int LruCacheSize = 32;
 
 const int BlockSize = 16;
 
-const int MatchTimes = 1073741824;
+const int MatchTimes = 1<<24;
 
-const int MaxFindNum = 1000000;
+const int MaxFindNum = 1<<20;
