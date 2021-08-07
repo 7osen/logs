@@ -25,7 +25,7 @@ void cmd(LogServer* l)
 
 void storager_test()
 {
-	storager* s = new plaintableStorager();
+	storager* s = new blocktableStorager();
 	s->start();
 	TimeCount t;
 	t.Update();

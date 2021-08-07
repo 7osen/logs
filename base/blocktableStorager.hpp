@@ -48,7 +48,7 @@ private:
 		for (; l < r;)
 		{
 			int mid = (l + r) >> 1;
-			message m(*(blocks->at(mid).timestamp), *(blocks->at(mid).topic),st);
+			message m(blocks->at(mid).timestamp, blocks->at(mid).topic,st);
 			if (v > m)
 			{
 				l = mid + 1;
@@ -87,11 +87,7 @@ private:
 			for (; !indexfile.eof();)
 			{
 				Block block;
-				string topic;
-				Timestamp timestamp;
-				indexfile.Read(topic, timestamp, block.offset);
-				block.topic = new string(topic);
-				block.timestamp = new Timestamp(timestamp);
+				indexfile.Read(block.topic, block.timestamp, block.offset);
 				blocks->push_back(std::move(block));
 			}
 			_lru.push(file->basename(), blocks);

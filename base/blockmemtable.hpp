@@ -6,9 +6,20 @@ using std::shared_ptr;
 
 struct Block
 {
-	string* topic;
-	Timestamp* timestamp;
+	string topic;
+	Timestamp timestamp;
 	int offset;
+	Block(const string& top,const Timestamp& time, int offs) 
+		:topic(top),timestamp(time),offset(offs)
+	{
+	}
+	Block()
+	{
+
+	}
+	~Block()
+	{
+	}
 };
 class blockmemtable:public memtable
 {
@@ -32,21 +43,22 @@ private:
 		int i = 0;
 		Block block;
 		block.offset = 0;
-		for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
+		for (auto it = _sortlist.begin(); it != _sortlist.end();)
 		{
 			++i;
-			block.topic = &(it->key._topic);
-			block.timestamp = &(it->key._timestamp);
 			_offset += it->key.length();
 			datafile.Write(it->key._timestamp, it->key._topic, it->key._context);
-			if (i == BlockSize)
+			auto next = it->next();
+			if (i == BlockSize || next == _sortlist.end())
 			{
+				block.topic = it->key._topic;
+				block.timestamp = it->key._timestamp;
 				_blocks->push_back(block);
 				i = 0;
 				block.offset = _offset;
 			}
+			it = next;
 		}
-		if (i != 0) _blocks->push_back(block);
 		datafile.close();
 	}
 
@@ -56,7 +68,7 @@ private:
 		iofile indexfile(filename, ios::trunc);
 		for (auto it = _blocks->begin(); it != _blocks->end(); it++)
 		{
-			indexfile.Write(*(it->topic),*(it->timestamp),it->offset);
+			indexfile.Write(it->topic,it->timestamp,it->offset);
 		}
 		indexfile.close();
 		rename(filename.c_str(), _indexFilename.c_str());
