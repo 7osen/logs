@@ -1,19 +1,15 @@
 #pragma once
 #include <memory>
-#include "storager.hpp"
+#include "database.hpp"
 #include "../net/HttpServer.hpp"
 using std::shared_ptr;
-
-
 
 struct searchRequest
 {
 	Connect* connect;
 	shared_ptr<httpHeader> header;
 	searchRequest()
-	{
-
-	}
+	{}
 	searchRequest(Connect* conn, shared_ptr<httpHeader> h)
 	{
 		connect = conn;
@@ -24,11 +20,9 @@ struct searchRequest
 class reader
 {
 public:
-	reader(storager* st)
+	reader(database* st)
 		:_storager(st),_queue(10)
-	{
-
-	}
+	{}
 
 	void query(Connect* conn, shared_ptr<httpHeader> header)
 	{
@@ -44,7 +38,6 @@ public:
 
 	~reader()
 	{
-
 	}
 
 private:
@@ -58,7 +51,7 @@ private:
 			searchRequest request = _queue.front();
 			TimeCount t;
 			t.Update();
-			_storager->get(&ssparam, request.header->topic, request.header->begin, request.header->end, request.header->num, request.header->searchkey);
+			_storager->get(&ssparam, request.header);
 			ss << response << ssparam.str().length() << "\r\n\r\n" << ssparam.str();
 			request.connect->Write(ss.str());
 			std::cout << t.getMircoSec() << std::endl;
@@ -68,7 +61,7 @@ private:
 		}
 	}
 
-	storager* _storager;
+	database* _storager;
 	thread* _searcherThread;
 	mq<searchRequest> _queue;
 	semaphore _s;

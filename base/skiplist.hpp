@@ -141,7 +141,7 @@ Node<K,V>* SkipList<K, V>::find(const K& key)
     Node<K, V>* current = _header;
 
     for (int i = _skip_list_level; i >= 0; i--) {
-        while (current->_forward[i] &&  key >current->_forward[i]->key) {
+        while (current->_forward[i] &&  key > current->_forward[i]->key) {
             current = current->_forward[i];
         }
     }

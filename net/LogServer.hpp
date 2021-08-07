@@ -1,6 +1,6 @@
 #pragma once
-#include "../base/plaintableStorager.hpp"
-#include "../base/blocktableStorager.hpp"
+#include "../base/plainDatabase.hpp"
+#include "../base/blockDatabase.hpp"
 #include "../base/mq.hpp"
 #include "../base//timecount.hpp"
 #include "../base/writer.hpp"
@@ -21,7 +21,7 @@ public:
 		:_server(port, threadnums)
 	{
 
-		_storager = new plaintableStorager();
+		_storager = new plainDatabase();
 		_writer = new writer(_storager);
 		_reader = new reader(_storager);
 		_writer->start();
@@ -31,66 +31,50 @@ public:
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
-	~LogServer()
-	{
-
-		delete _storager;
-	}
-
-	void start()
-	{
-		_server.start();
-	}
-
-	void close()
-	{
-		_server.close();
-	}
+	~LogServer() {delete _storager;}
+	void start(){_server.start();}
+	void close(){_server.close();}
 
 private:
-	void find(Connect* conn, shared_ptr<httpHeader> header)
-	{
-		_reader->query(conn, header);
-	}
-
-	void onMessage(char* begin, char* end)
-	{
-		string timestamp, topic, context;
-		char* mid = std::find(begin, end, '=');
-		for (; mid != end; mid = std::find(begin, end, '='))
-		{
-			char* next = std::find(mid + 1, end, '&');
-			char* val = mid + 1;
-			int vallen = next - val;
-			if (strcmp(begin, mid - begin, TIMESTRING))
-			{
-				timestamp.assign(val, next);
-			}
-			else if (strcmp(begin, mid - begin, TOPICSTRING))
-			{
-				topic.assign(val, next);
-			}
-			else if (strcmp(begin, mid - begin, CONTEXTSTRING))
-			{
-				context.assign(val, next);
-			}
-			begin = next + 1;
-		}
-		_writer->set(timestamp, topic, context);
-	}
-	bool strcmp(char* ch, int len, const char* src)
-	{
-		for (int i = 0; i < len; i++)
-		{
-			if (ch[i] != src[i]) return false;
-		}
-		return true;
-	}
-
-	storager* _storager;
+	void onMessage(char* begin, char* end);
+	void find(Connect* conn, shared_ptr<httpHeader> header) {_reader->query(conn, header);}
+	//bool strcmp(char* ch, int len, const char* src)
+	//{
+	//	for (int i = 0; i < len; i++)
+	//	{
+	//		if (ch[i] != src[i]) return false;
+	//	}
+	//	return true;
+	//}
+	database* _storager;
 	writer* _writer;
 	reader* _reader;
 	std::thread* _writerThread;
 	HttpServer _server;
 };
 
+void LogServer::onMessage(char* begin, char* end)
+{
+	string timestamp, topic, context;
+	char* mid = std::find(begin, end, '=');
+	for (; mid != end; mid = std::find(begin, end, '='))
+	{
+		char* next = std::find(mid + 1, end, '&');
+		char* val = mid + 1;
+		int vallen = next - val;
+		if (memcmp(begin, TIMESTRING, mid - begin) == 0)
+		{
+			timestamp.assign(val, next);
+		}
+		else if (memcmp(begin, TOPICSTRING, mid - begin) == 0)
+		{
+			topic.assign(val, next);
+		}
+		else if (memcmp(begin, CONTEXTSTRING, mid - begin) == 0)
+		{
+			context.assign(val, next);
+		}
+		begin = next + 1;
+	}
+	_writer->set(timestamp, topic, context);
+}

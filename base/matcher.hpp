@@ -39,20 +39,9 @@ public:
         }
         fail();
 	}
-	~matcher()
-	{
-
-	}
-
-    int size()
-    {
-        return _size;
-    }
-
-    void setStringstream(stringstream* ss)
-    {
-        _ss = ss;
-    }
+	~matcher(){}
+    int size() { return _size;}
+    void setStringstream(stringstream* ss){_ss = ss;}
 
     void build(string s) {
         int now = 0;
@@ -109,7 +98,6 @@ public:
             }
         else 
             repeat = 1;
-
         if (repeat > 0) 
         {
             *_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
@@ -120,7 +108,6 @@ public:
         return 0;
     }
  
-
 private:
     int _cnt;
     int _size;

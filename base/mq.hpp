@@ -19,10 +19,7 @@ public:
 		}
 	}
 
-	~mq()
-	{
-
-	}
+	~mq(){}
 
 	void push(const T& val)
 	{
@@ -34,15 +31,12 @@ public:
 			next = (old + 1) % _size;
 			while (next == _head) sleep(1);
 		}
-
 		_queue[old] = val;
 		_valid[old] = true;
-		//_semaphore.wakeup();
 	}
 
 	T& front()
 	{
-		//_semaphore.wait();
 		while (_head == _tail);
 		while (!_valid[_head]);
 		return _queue[_head];
@@ -57,7 +51,6 @@ private:
 	int _head;
 	int _size;
 	atomic<int> _tail;
-	semaphore _semaphore;
 	bool _valid[QUEUE_LENGTH];
 	T _queue[QUEUE_LENGTH];
 };

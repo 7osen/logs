@@ -1,13 +1,13 @@
 #pragma once
-#include "storager.hpp"
+#include "database.hpp"
 #include "plainmemtable.hpp"
-class plaintableStorager:public storager
+class plainDatabase:public database
 {
 public:
-	plaintableStorager(const string& name = "log")
-		:storager(name)
+	plainDatabase(const string& name = "log")
+		:database(name)
 	{}
-	~plaintableStorager()
+	~plainDatabase()
 	{
 		delete _mems;
 	}
@@ -17,11 +17,11 @@ private:
 	{
 		return new plainmemtable(getTimenow());
 	}
-	void memchange(memtable*)
+	void push_cache(memtable*)
 	{}
 	void restart()
 	{}
-	int getFromFile(matcher* match, logfile* file, const message& start_time, const message& end_time, int num)
+	int get_from_file(matcher* match, logfile* file, const message& start_time, const message& end_time, int num)
 	{
 		iofile log(file->datafilename());
 		iofile index(file->indexfilename());

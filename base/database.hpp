@@ -6,34 +6,35 @@
 #include "memtable.hpp"
 #include "mq.hpp"
 #include "metadata.hpp"
+#include "../net/HttpHeader.hpp"
 using std::vector;
 using std::mutex;
 using std::thread;
 using std::to_string;
 
 
-class storager:noncopyable
+class database:noncopyable
 {
 public:
-	storager(const string& filename = "log")
+	database(const string& filename = "log")
 		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _lastmems(nullptr), _tables(100)
 	{
 		
 	}
 	void start();
 	void set(const message&);
-	int get(std::stringstream* ss, const string& topic, const string& start_time,const string& end_time, int num, const string& key);
-	virtual ~storager() {}
+	int get(std::stringstream* ss, shared_ptr<httpHeader>);
+	virtual ~database() {}
 protected:
 	void flush();
 	void startflush();
 	void resetmem();
-	void roll();
+	void clearTemp();
 
 	virtual void restart() = 0;
-	virtual void memchange(memtable*) = 0;
+	virtual void push_cache(memtable*) = 0;
 	virtual memtable* createMemtable() = 0;
-	virtual int getFromFile(matcher*, logfile*, const message&, const message&, int num) = 0;
+	virtual int get_from_file(matcher*, logfile*, const message&, const message&, int num) = 0;
 
 	
 	int _filenum;
@@ -52,9 +53,7 @@ protected:
 };
 
 
-
-
-void storager::start()
+void database::start()
 {
 	_mems = createMemtable();
 	_metadata.restart();
@@ -65,21 +64,20 @@ void storager::start()
 	startflush();
 }
 
-void storager::startflush()
+void database::startflush()
 {
-	_thread = new thread(std::bind(&storager::flush, this));
+	_thread = new thread(std::bind(&database::flush, this));
 	_thread->detach();
 }
 
-void storager::flush()
+void database::flush()
 {
 	while (1)
 	{
 		_sem.wait();
 		memtable* table = _tables.front();
 		table->flush();
-	
-		memchange(table);
+		push_cache(table);
 		{
 			std::lock_guard<mutex> lock(_findmutex);
 			_metadata.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
@@ -91,11 +89,11 @@ void storager::flush()
 		delete table;
 		_tables.pop();
 		_tempnum--;
-		roll();
+		clearTemp();
 	}
 }
 
-void storager::roll()
+void database::clearTemp()
 {
 	remove((_filename + ".temp0" ) .c_str());
 	for (int i = 1; i < _tempnum; i++)
@@ -109,21 +107,22 @@ void storager::roll()
 	}
 }
 
-int storager::get(std::stringstream* ss, const string& topic, const string& start_time, const string& end_time, int num,const string& key = "")
+int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 {
-	matcher match(key);
-	message start(start_time, topic, "");
-	message end(end_time , topic, "");
+	matcher match(header->searchkey);
+	message start(header->begin, header->topic, "");
+	message end(header->end, header->topic, "");
 	match.setStringstream(ss);
+	int num = header->num;
 	int ret = 0;
 	if (num > 100000) num = 100000;
 	std::lock_guard<mutex> lock(_findmutex);
 	for (auto it = _metadata.begin(); it != _metadata.end(); it++)
-		if ((*it)->min_time() > (end_time) || (*it)->max_time() < start_time) 
+		if ((*it)->min_time() > (header->end) || (*it)->max_time() < header->begin)
 			continue;
 		else 
 		{
-			ret += getFromFile(&match, *it, start, end, num - ret);
+			ret += get_from_file(&match, *it, start, end, num - ret);
 			if (ret >= num || match.size() <= 0) return ret;
 		}
 	{
@@ -137,23 +136,23 @@ int storager::get(std::stringstream* ss, const string& topic, const string& star
 
 
 
-void storager::set(const message& m)
+void database::set(const message& m)
 {
 	_mems->set(m);
 	_tempfile->Write(m._timestamp, m._topic, m._context);
 	_tempfile->flush();
 	if (_tempfile->writePos() > MaxFileSize)
 	{
+		_tempfile->close();
+		rename(_tempfile->name().c_str(), (_filename + ".temp" + std::to_string(_tempnum - 1)).c_str());
+		_tempnum++;
+		_tempfile = new iofile(_filename + ".temp");
 		resetmem();
 	}
 }
 
-void storager::resetmem()
+void database::resetmem()
 {
-	_tempfile->close();
-	rename(_tempfile->name().c_str(), (_filename + ".temp" + std::to_string(_tempnum - 1)).c_str());
-	_tempnum++;
-	_tempfile = new iofile(_filename + ".temp");
 	_tables.push(_mems);
 	{
 		std::lock_guard<mutex> lock(_insertmutex);

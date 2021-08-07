@@ -1,13 +1,13 @@
 #pragma once
 #include <thread>
-#include "storager.hpp"
+#include "database.hpp"
 #include "noncopyable.hpp"
 using std::thread;
 
 class writer:noncopyable
 {
 public:
-	writer(storager* st)
+	writer(database* st)
 		:_storager(st),_queue(new mq<message>(QUEUE_LENGTH))
 	{
 
@@ -41,7 +41,7 @@ private:
 		}
 	}
 
-	storager* _storager;
+	database* _storager;
 	thread* _writerThread;
 	mq<message>* _queue;
 };

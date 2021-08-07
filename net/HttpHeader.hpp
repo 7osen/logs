@@ -36,13 +36,8 @@ public:
 		getAttributes();
 	}
 
-	~httpHeader()
-	{}
-
-	HttpMethod method()
-	{
-		return _method;
-	}
+	~httpHeader(){}
+	HttpMethod method(){return _method;}
 	int num;
 	int datalength = 0;
 	string version;

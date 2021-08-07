@@ -37,17 +37,11 @@ class metadata
 {
 	typedef vector<logfile*>::iterator Iterator;
 public:
-	metadata()
-	{
-	}
-	~metadata()
-	{
-	}
-
-	int size()
-	{
-		return _files.size();
-	}
+	metadata(){}
+	~metadata(){}
+	int size(){return _files.size();}
+	Iterator begin() { return _files.begin(); }
+	Iterator end() { return _files.end(); }
 
 	bool file_exists(const string& name) {
 		struct stat file;
@@ -68,6 +62,7 @@ public:
 		}
 		metadata.close();
 	}
+
 	void push_back(logfile* file)
 	{
 		_files.emplace_back(file);
@@ -88,14 +83,6 @@ public:
 			metadata.close();
 		}
 
-	}
-	Iterator begin()
-	{
-		return _files.begin();
-	}
-	Iterator end()
-	{
-		return _files.end();
 	}
 
 private:

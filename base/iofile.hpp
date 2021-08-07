@@ -52,9 +52,9 @@ public:
 	template<typename T>
 	ostream& operator << (T t){return _file << t;}
 private:
+	int _times;
 	string _filename;
 	fstream _file;
-	int _times;
 	Buffer _buffer;
 };
 

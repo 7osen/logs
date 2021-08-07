@@ -13,28 +13,17 @@ struct Block
 		:topic(top),timestamp(time),offset(offs)
 	{
 	}
-	Block()
-	{
-
-	}
-	~Block()
-	{
-	}
+	Block(){}
+	~Block(){}
 };
 class blockmemtable:public memtable
 {
 public:
 	blockmemtable(const string& name)
 		:memtable(name),_blocks(std::make_shared<vector<Block> >())
-	{
-	}
-	~blockmemtable()
 	{}
-
-	shared_ptr<vector<Block>> getBlocks()
-	{
-		return _blocks;
-	}
+	~blockmemtable(){}
+	shared_ptr<vector<Block>> getBlocks(){return _blocks;}
 
 private:
 	void writeData()

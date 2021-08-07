@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "storager.hpp"
+#include "database.hpp"
 #include "blockmemtable.hpp"
 #include "lruCache.hpp"
 
@@ -10,23 +10,23 @@ using std::string;
 using std::vector;
 
 
-class blocktableStorager:public storager
+class blockDatabase:public database
 {
 	typedef shared_ptr<vector<Block>> BlocksPtr;
 public:
-	blocktableStorager(const string& name = "log")
-		:storager(name)
+	blockDatabase(const string& name = "log")
+		:database(name)
 	{
 
 	}
-	~blocktableStorager()
+	~blockDatabase()
 	{
 		delete _mems;
 	}
 
 private:
 
-	void memchange(memtable* table)
+	void push_cache(memtable* table)
 	{
 		_lru.push(table->name(),dynamic_cast<blockmemtable*>(table)->getBlocks());
 	}
@@ -81,7 +81,6 @@ private:
 		blocks = _lru.get(file->basename());
 		if (!blocks)
 		{
-			printf("no in cache \n");
 			blocks = std::make_shared<vector<Block> >();
 			iofile indexfile(file->indexfilename());
 			for (; !indexfile.eof();)
@@ -95,7 +94,7 @@ private:
 		return blocks;
 	}
 
-	int getFromFile(matcher* match, logfile* file, const message& begin, const message& end, int num)
+	int get_from_file(matcher* match, logfile* file, const message& begin, const message& end, int num)
 	{
 		BlocksPtr blocks = getBlocks(file);
 		iofile* datafile = new iofile(file->datafilename());
