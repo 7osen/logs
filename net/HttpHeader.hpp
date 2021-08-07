@@ -27,14 +27,16 @@ class httpHeader
 {
 public:
 	httpHeader(char* begin, char* end)
-		:_begin(begin),_end(end),searchkey("")
+		:_begin(begin),_end(end),searchkey(""),num(100000)
 	{
-		num = 1000;
 		getMethod();
 		getUrl();
 		getVersion();
 		getAttributes();
 	}
+	httpHeader()
+		:searchkey(""), num(100000)
+	{}
 
 	~httpHeader(){}
 	HttpMethod method(){return _method;}
