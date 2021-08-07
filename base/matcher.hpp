@@ -39,7 +39,10 @@ public:
         }
         fail();
 	}
-	~matcher(){}
+	~matcher()
+    {
+        if (_size <= 0) *_ss << "next start time :" << _lasttime << "\n";
+    }
     int size() { return _size;}
     void setStringstream(stringstream* ss){_ss = ss;}
 
@@ -98,13 +101,15 @@ public:
             }
         else 
             repeat = 1;
+        if (_size <= 0)
+        {
+            _lasttime = m._timestamp;
+        }
         if (repeat > 0) 
         {
             *_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
-            if (_size == 0) *_ss << "next start time :" << m._timestamp;
             return 1;
         }
-        if (_size == 0) *_ss << "next start time :" << m._timestamp;
         return 0;
     }
  
@@ -112,5 +117,6 @@ private:
     int _cnt;
     int _size;
     stringstream* _ss;
+    Timestamp _lasttime;
     vector<autoAcNode> _autoAc;
 };
