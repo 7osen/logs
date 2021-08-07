@@ -13,7 +13,7 @@ find_package(Threads REQUIRED)
 
 
 # 将源代码添加到此项目的可执行文件。
-add_executable (LogServer "main.cpp"  "base/memtable.hpp" "base/skiplist.hpp" "base/timecount.hpp" "base/iofile.hpp" "base/database.hpp" "base/setting.hpp" "net/Connect.hpp" "net/WorkerThread.hpp" "net/Epoller.hpp" "base/buffer.hpp" "net/TcpServer.hpp" "net/HttpHeader.hpp" "net/HttpServer.hpp" "net/LogServer.hpp" "base/mq.hpp" "base/message.hpp" "base/noncopyable.hpp"  "base/semaphore.hpp" "base/matcher.hpp" "base/metadata.hpp" "base/plainDatabase.hpp"  "base/plainmemtable.hpp" "base/blockDatabase.hpp" "base/blockmemtable.hpp" "base/lruCache.hpp"  "base/writer.hpp" "base/reader.hpp")
+add_executable (LogServer "main.cpp"  "base/memtable.hpp" "base/skiplist.hpp" "base/timecount.hpp" "base/iofile.hpp" "base/database.hpp" "base/setting.hpp" "net/Connect.hpp" "net/WorkerThread.hpp" "net/Epoller.hpp" "base/buffer.hpp" "net/TcpServer.hpp" "net/HttpHeader.hpp" "net/HttpServer.hpp" "net/LogServer.hpp" "base/mq.hpp" "base/message.hpp" "base/noncopyable.hpp"  "base/semaphore.hpp" "base/matcher.hpp" "base/metadata.hpp" "base/plainDatabase.hpp"  "base/plainmemtable.hpp" "base/blockDatabase.hpp" "base/blockmemtable.hpp" "base/lruCache.hpp"  "base/writer.hpp" "base/reader.hpp" )
 
 target_link_libraries(LogServer Threads::Threads)
 

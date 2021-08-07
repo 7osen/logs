@@ -22,7 +22,7 @@ public:
 			return Value();
 		else
 		{
-			push((*_map[k]).first, ((*_map[k]).second));
+			push(k, ((*_map[k]).second));
 			return ((*_map[k]).second);
 		}
 	}
@@ -31,7 +31,7 @@ public:
 	{
 		if (_map.find(k) != _map.end())
 		{
-			_list.push_front(*_map[k]);
+			_list.push_front(make_pair<Key, Value>((Key)k, (Value)v));
 			_list.erase(_map[k]);
 			_map[k] = _list.begin();
 			return;

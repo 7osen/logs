@@ -51,22 +51,12 @@ void storager_test()
 
 int main()
 {	
-	//LogServer ls(8000,2);
+	LogServer ls(8000,2);
 	//thread t(storager_test);
-	//thread t(cmd, &ls);
-	//t.detach();
-	//ls.start();
+	thread t(cmd, &ls);
+	t.detach();
+	ls.start();
 	//int a;
 	//scanf("%d", &a);
-	database* d = new blockDatabase();
-	d->start();
-	shared_ptr<httpHeader> h = std::make_shared<httpHeader>();
-	h->topic = "topic5";
-	h->end = "20210807-15:30";
-	h->begin = "20210807-15:20";//statei.range(0);
-	h->num = 1;
-	stringstream ss;
-	d->get(&ss, h);
-	cout << ss.str() << endl;
 	
 }	

@@ -21,11 +21,12 @@ struct Timestamp
 	Timestamp(const string& st)
 		:day(0), hour(0), min(0), sec(0), microseconds(0), hour_min_sec(0)
 	{
-		for (int i = 0; i < 8 && i < st.length(); i++) day = day * 10 + (st[i] - '0');
-		for (int i = 9; i < 11 && i < st.length(); i++) hour = hour * 10 + (st[i] - '0');
-		for (int i = 12; i < 14 && i < st.length(); i++) min = min * 10 + (st[i] - '0');
-		for (int i = 15; i < 17 && i < st.length(); i++) sec = sec * 10 + (st[i] - '0');
-		for (int i = 18;  i < st.length(); i++) microseconds = microseconds * 10 + (st[i] - '0');
+		int l = st.length();
+		for (int i = 0; i < 8 && i < l; i++) day = day * 10 + (st[i] - '0');
+		for (int i = 9; i < 11 && i < l; i++) hour = hour * 10 + (st[i] - '0');
+		for (int i = 12; i < 14 && i < l; i++) min = min * 10 + (st[i] - '0');
+		for (int i = 15; i < 17 && i < l; i++) sec = sec * 10 + (st[i] - '0');
+		for (int i = 18;  i < l; i++) microseconds = microseconds * 10 + (st[i] - '0');
 		hour_min_sec = hour * 10000 + min * 100 + sec;
 	}
 

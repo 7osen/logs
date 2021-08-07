@@ -112,9 +112,9 @@ int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 	matcher match(header->searchkey);
 	message start(header->begin, header->topic, "");
 	message end(header->end, header->topic, "");
-	match.setStringstream(ss);
 	int num = header->num;
 	int ret = 0;
+	match.setStringstream(ss);
 	if (num > 100000) num = 100000;
 	std::lock_guard<mutex> lock(_findmutex);
 	for (auto it = _metadata.begin(); it != _metadata.end(); it++)
