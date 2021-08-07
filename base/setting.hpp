@@ -14,3 +14,5 @@ const int LruCacheSize = 32;
 const int BlockSize = 16;
 
 const int MatchTimes = 1073741824;
+
+const int MaxFindNum = 1000000;

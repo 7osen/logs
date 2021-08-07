@@ -115,7 +115,7 @@ int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 	int num = header->num;
 	int ret = 0;
 	match.setStringstream(ss);
-	if (num > 100000) num = 100000;
+	if (num > MaxFindNum) num = MaxFindNum;
 	std::lock_guard<mutex> lock(_findmutex);
 	for (auto it = _metadata.begin(); it != _metadata.end(); it++)
 		if ((*it)->min_time() > end._timestamp || (*it)->max_time() < start._timestamp)
