@@ -97,16 +97,16 @@ private:
 	int get_from_file(matcher* match, logfile* file, const message& begin, const message& end, int num)
 	{
 		BlocksPtr blocks = getBlocks(file);
-		iofile* datafile = new iofile(file->datafilename());
-		int beginOffset = find(datafile, blocks, begin);
-		int endOffset = find(datafile, blocks, end);
-		datafile->setReadPos(beginOffset);
+		iofile datafile(file->datafilename());
+		int beginOffset = find(&datafile, blocks, begin);
+		int endOffset = find(&datafile, blocks, end);
+		datafile.setReadPos(beginOffset);
 		string  topic, context;
 		Timestamp timestamp;
 		int ret = 0;
-		while (!datafile->eof() && datafile->readPos() < endOffset)
+		while (!datafile.eof() && datafile.readPos() < endOffset)
 		{
-			datafile->Read(timestamp, topic, context);
+			datafile.Read(timestamp, topic, context);
 			ret += match->match(message(timestamp, topic, context));
 			if (ret == num) return ret;
 		}
