@@ -27,6 +27,7 @@ class matcher
 {
 public:
 	matcher(string key = "",int size = MatchTimes)
+        :_size(size)
 	{
         autoAcNode newNode;
         _autoAc.emplace_back(newNode);
