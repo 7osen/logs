@@ -41,8 +41,7 @@ public:
 		{
 			printf("---------------%d------------------\n", _list.size());
 			_map.erase(_map.find(_list.back().first));
-			_list.pop_back();1
-
+			_list.pop_back();
 		}
 		if (_map.find(k) == _map.end())
 		{
