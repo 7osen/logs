@@ -37,7 +37,7 @@ private:
 			++i;
 			_offset += it->key.length();
 			datafile.Write(it->key._timestamp, it->key._topic, it->key._context);
-			auto next = it->next();
+			auto next = it->_forward[0];
 			if (i == BlockSize || next == _sortlist.end())
 			{
 				block.topic = it->key._topic;

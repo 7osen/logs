@@ -12,7 +12,7 @@ private:
 	void writeData()
 	{
 		iofile datafile(_dataFilename, ios::trunc);
-		for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
+		for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->_forward[0])
 		{
 			it->value = _offset;
 			_offset += it->key.length();
@@ -26,7 +26,7 @@ private:
 		string filename = _indexFilename + "w";
 		iofile indexfile(filename, ios::trunc);
 		indexfile.Write(_num);
-		for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->next())
+		for (auto it = _sortlist.begin(); it != _sortlist.end(); it = it->_forward[0])
 		{
 			indexfile.Write(it->value);
 		}

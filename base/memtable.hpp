@@ -88,7 +88,7 @@ int memtable::get(matcher* match, const message& start_message, const message& e
 	auto start = _sortlist.find(start_message);
 	auto end = _sortlist.find(end_message);
 	int ret = 0;
-	for (auto it = start; it != end; it = it->next())
+	for (auto it = start; it != end; it = it->_forward[0])
 	{
 		ret += match->match(it->key);
 		if (ret == num) return ret;

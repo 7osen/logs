@@ -30,7 +30,7 @@ public:
     };
 
     ~Node() { delete[] _forward; }
-    Node<K, V>* next(){return _forward[0];}
+   // Node<K, V>* next(){return _forward[0];}
 private:
 };
 
@@ -72,7 +72,7 @@ SkipList<K, V>::~SkipList()
 {
     for (Node<K, V>* header = _header; header != nullptr;)
     {
-        auto next = header->next();
+        auto next = header->_forward[0];
         delete header;
         header = next;
     }

@@ -51,10 +51,10 @@ void storager_test()
 
 int main()
 {
-	LogServer ls(8080,2);
+	LogServer ls(8080,4);
 	//thread t(storager_test);
-	//thread t(cmd, &ls);
-	//t.detach();
+	thread t(cmd, &ls);
+	t.detach();
 	ls.start();
 	//int a;
 	//scanf("%d", &a);
