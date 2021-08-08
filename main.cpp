@@ -51,7 +51,7 @@ void storager_test()
 
 int main()
 {
-	LogServer ls(8000,2);
+	LogServer ls(8080,2);
 	//thread t(storager_test);
 	//thread t(cmd, &ls);
 	//t.detach();
