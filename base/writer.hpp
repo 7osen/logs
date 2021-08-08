@@ -33,10 +33,18 @@ private:
 	void write()
 	{
 		int count = 0;
+		TimeCount t;
+		t.Update();
 		while (1)
 		{
 			_storager->set(_queue->front());
 			count++;
+			if (t.getSecond() > 1.0)
+			{
+				printf("%d\n", count);
+				count = 0;
+				t.Update();
+			}
 			_queue->pop();
 		}
 	}

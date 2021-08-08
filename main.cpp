@@ -50,13 +50,12 @@ void storager_test()
 }
 
 int main()
-{	
+{
 	LogServer ls(8000,2);
 	//thread t(storager_test);
-	thread t(cmd, &ls);
-	t.detach();
+	//thread t(cmd, &ls);
+	//t.detach();
 	ls.start();
 	//int a;
 	//scanf("%d", &a);
-	
 }	

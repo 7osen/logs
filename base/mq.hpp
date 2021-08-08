@@ -5,7 +5,7 @@
 #include "semaphore.hpp"
 using std::atomic;
 
-const int QUEUE_LENGTH = 40960;
+const int QUEUE_LENGTH = 409600;
 
 template<typename T>
 class mq:noncopyable
@@ -25,11 +25,11 @@ public:
 	{
 		int old = _tail;
 		int next = (old + 1) % _size;
-		while (next == _head) sleep(1);
+		while (next == _head) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		while (!_tail.compare_exchange_weak(old, next))
 		{
 			next = (old + 1) % _size;
-			while (next == _head) sleep(1);
+			while (next == _head) std::this_thread::sleep_for(std::chrono::milliseconds(1));;
 		}
 		_queue[old] = val;
 		_valid[old] = true;
