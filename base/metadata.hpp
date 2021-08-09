@@ -9,6 +9,11 @@
 using std::vector;
 using std::string;
 
+bool file_exists(const string& name) {
+	struct stat file;
+	return (stat(name.c_str(), &file) == 0);
+}
+
 class logfile:noncopyable
 {
 public:
@@ -22,6 +27,7 @@ public:
 	string indexfilename() { return _basename + ".index";}
 	string datafilename() { return _basename + ".data";}
 	string basename() { return _basename; }
+
 
 private:
 	bool _inCache;
@@ -43,10 +49,7 @@ public:
 	Iterator begin() { return _files.begin(); }
 	Iterator end() { return _files.end(); }
 
-	bool file_exists(const string& name) {
-		struct stat file;
-		return (stat(name.c_str(), &file) == 0);
-	}
+
 
 	void restart()
 	{

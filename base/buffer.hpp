@@ -18,6 +18,11 @@ public:
 	void reset();
 	char* end(){return _data + _Writepos;}
 	char* begin(){return _data + _Readpos;}
+	void write(char* ch, int n)
+	{
+		memcpy(_data + _Writepos, ch, n);
+		_Writepos += n;
+	}
 	ssize_t readFD(int fd);
 	size_t availRead(){return _Writepos - _Readpos;}
 	size_t availWrite(){return _bufferSize - _Writepos;}
