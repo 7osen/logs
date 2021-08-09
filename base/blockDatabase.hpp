@@ -87,8 +87,6 @@ private:
 			size_t num = 0;
 			indexfile.Read(num);
 			blocks->resize(num);
-			TimeCount t;
-			t.Update();
 			for (int i = 0; i < num; i++)
 			{
 				auto block = &(blocks->at(i));

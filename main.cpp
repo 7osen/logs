@@ -22,20 +22,9 @@ void cmd(LogServer* l)
 	l->close();
 }
 
-string getstr(int n)
-{
-	string st = "";
-	for (; n;)
-	{
-		st += (n%26) + 'a';
-		n /= 26;
-		n *= 5;
-	}
-	return st;
-}
-
 void storager_test()
 {
+	string st = "11111111";
 	database* s = new blockDatabase();
 	s->start();
 	TimeCount t;
@@ -44,8 +33,8 @@ void storager_test()
 	for (;;)
 	{
 		Timestamp t1(getTimenow());
-		message m(t1,"topic" + to_string(t1.microseconds%10), getstr(t1.microseconds));
-		for (int i = 1; i <= 10000; i++)
+		message m(t1,"topic" + to_string(t1.microseconds%10), st);
+		for (int i = 1; i <= 100; i++)
 		{
 		//	message m(getTimenow(), "t", "dasf");
 		s->set(m);
@@ -65,11 +54,11 @@ int main()
 {
 	//database* s = new blockDatabase();
 	//s->start();
-	LogServer ls(8080,4);
-	//thread t(storager_test);
-	thread t(cmd, &ls);
+	// LogServer ls(8080, 4);
+	thread t(storager_test);
+	//thread t(cmd, &ls);
 	t.detach();
-	ls.start();
-	//int a;
-	//scanf("%d", &a);
+	//ls.start();
+	int a;
+	scanf("%d", &a);
 }	
