@@ -105,7 +105,7 @@ private:
 		BlocksPtr blocks = getBlocks(file);
 		iofile datafile(file->datafilename());
 		int beginOffset = find(&datafile, blocks, begin);
-		int endOffset = find(&datafile, blocks, end);
+		int endOffset   = find(&datafile, blocks, end);
 		datafile.setReadPos(beginOffset);
 		string  topic, context;
 		Timestamp timestamp;

@@ -21,7 +21,7 @@ public:
 		:_server(port, threadnums)
 	{
 
-		_storager = new blockDatabase();
+		_storager = new plainDatabase();
 		_writer = new writer(_storager);
 		_reader = new reader(_storager);
 		_writer->start();
