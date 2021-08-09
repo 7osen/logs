@@ -63,13 +63,13 @@ void storager_test()
 
 int main()
 {
-	database* s = new blockDatabase();
-	s->start();
-	//LogServer ls(8080,4);
+	//database* s = new blockDatabase();
+	//s->start();
+	LogServer ls(8080,4);
 	//thread t(storager_test);
-	//thread t(cmd, &ls);
-	//t.detach();
-	//ls.start();
+	thread t(cmd, &ls);
+	t.detach();
+	ls.start();
 	//int a;
 	//scanf("%d", &a);
 }	

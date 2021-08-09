@@ -82,19 +82,19 @@ private:
 		blocks = _lru.get(file->basename());
 		if (!blocks)
 		{
+			iofile indexfile(file->indexfilename());
 			blocks = std::make_shared<vector<Block> >();
-			int num = 0;
-			blocks->resize(2000000);
+			size_t num = 0;
+			indexfile.Read(num);
+			blocks->resize(num);
 			TimeCount t;
 			t.Update();
-			iofile indexfile(file->indexfilename());
-			for (;!indexfile.eof();)
+			for (int i = 0; i < num; i++)
 			{
-				auto block = &(blocks->at(num));
+				auto block = &(blocks->at(i));
 				indexfile.Read(block->topic);
 				indexfile.Read(block->timestamp);
 				indexfile.Read(block->offset);
-				num++;
 			}
 			_lru.push(file->basename(), blocks);
 		}
