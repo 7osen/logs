@@ -69,8 +69,7 @@ void memtable::restart(const string& file)
 	while (!tempfile.eof())
 	{
 		tempfile.Read(timestamp, topic, context);
-		message m(timestamp, topic,context);
-		_sortlist.push_back(m, 0);
+		_sortlist.push_back(message(timestamp, topic, context), 0);
 		_num++;
 	}
 	tempfile.close();

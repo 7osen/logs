@@ -69,27 +69,32 @@ void database::start()
 
 void database::startflush()
 {
-	//_thread = new thread(std::bind(&database::flush, this));
-	//_thread->detach();
+	_thread = new thread(std::bind(&database::flush, this));
+	_thread->detach();
+
 }
 
 void database::flush()
 {
-	memtable* table = _tables.front();
-	table->flush();
-	push_cache(table);
+	for (;;)
 	{
+		_sem.wait();
+		memtable* table = _tables.front();
+		table->flush();
+		push_cache(table);
+		{
 		std::lock_guard<mutex> lock(_findmutex);
 		_metadata.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
-		{
-			if (_lastmems == table) 
-			_lastmems = nullptr;
+			{
+				if (_lastmems == table) 
+				_lastmems = nullptr;
+			}
 		}
+		delete table;
+		_tables.pop();
+		_tempnum--;
+		clearTemp();
 	}
-	delete table;
-	_tables.pop();
-	_tempnum--;
-	clearTemp();
 }
 
 void database::clearTemp()
@@ -176,5 +181,6 @@ void database::resetmem()
 		_lastmems = _mems;
 		_mems = createMemtable();
 	}
-	_threadPool.enqueue(std::bind(&database::flush,this));
+	_sem.wakeup();
+
 }

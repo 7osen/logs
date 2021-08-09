@@ -31,7 +31,7 @@ private:
 	{
 		iofile datafile(_dataFilename, ios::trunc);
 		int i = 0;
-		_blocks->resize(_sortlist.size() / BlockSize + 1);
+		_blocks->resize(_sortlist.size() / BlockSize + 2);
 		auto block = &(_blocks->at(0));
 		int num = 0;
 		block->offset = 0;
