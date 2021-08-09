@@ -2,10 +2,15 @@
 #include <unordered_map>
 #include <list>
 #include <utility>
+#include <mutex>
+
+using std::mutex;
 using std::unordered_map;
 using std::list;
 using std::pair;
 using std::make_pair;
+
+
 
 template<typename Key,typename Value,typename Iter>
 class LRUCache
@@ -29,6 +34,7 @@ public:
 
 	void push(const Key& k,const Value& v)
 	{
+		std::lock_guard<mutex> _lock(_mutex);
 		if (_map.find(k) != _map.end())
 		{
 			_list.push_front(make_pair<Key, Value>((Key)k, (Value)v));
@@ -54,6 +60,7 @@ public:
 
 private:
 	int _size;
+	mutex _mutex;
 	List _list;
 	unordered_map<Key,Iter> _map;
 };

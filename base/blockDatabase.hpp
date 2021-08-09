@@ -62,8 +62,9 @@ private:
 		Timestamp timestamp;
 		for (; !file->eof();)
 		{
-			file->Read(timestamp, topic, context);
-			message m(timestamp, topic, context);
+
+			message m;
+			file->Read(m._timestamp, m._topic, m._context);
 			if (v > m)
 			{
 				offset = file->readPos();
@@ -82,12 +83,18 @@ private:
 		if (!blocks)
 		{
 			blocks = std::make_shared<vector<Block> >();
+			int num = 0;
+			blocks->resize(2000000);
+			TimeCount t;
+			t.Update();
 			iofile indexfile(file->indexfilename());
-			for (; !indexfile.eof();)
+			for (;!indexfile.eof();)
 			{
-				Block block;
-				indexfile.Read(block.topic, block.timestamp, block.offset);
-				blocks->push_back(std::move(block));
+				auto block = &(blocks->at(num));
+				indexfile.Read(block->topic);
+				indexfile.Read(block->timestamp);
+				indexfile.Read(block->offset);
+				num++;
 			}
 			_lru.push(file->basename(), blocks);
 		}
@@ -96,6 +103,7 @@ private:
 
 	int get_from_file(matcher* match, logfile* file, const message& begin, const message& end, int num)
 	{
+
 		BlocksPtr blocks = getBlocks(file);
 		iofile datafile(file->datafilename());
 		int beginOffset = find(&datafile, blocks, begin);
@@ -106,9 +114,11 @@ private:
 		int ret = 0;
 		while (!datafile.eof() && datafile.readPos() < endOffset)
 		{
-			datafile.Read(timestamp, topic, context);
+			datafile.Read(timestamp);
+			datafile.Read(topic);
+			datafile.Read(context);
 			ret += match->match(message(timestamp, topic, context));
-			if (ret == num) return ret;
+			if (ret == num || match->size() <= 0) return ret;
 		}
 		return ret;
 	}

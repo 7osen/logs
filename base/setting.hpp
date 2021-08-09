@@ -13,6 +13,6 @@ const int LruCacheSize = 32;
 
 const int BlockSize = 16;
 
-const int MatchTimes = 1<<24;
+const int MatchTimes = 1<<16;
 
 const int MaxFindNum = 1<<20;

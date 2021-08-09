@@ -4,6 +4,7 @@
 #include <ctime>
 #include <sys/time.h>
 #include <string>
+#include <iostream>
 using namespace std::chrono;
 using std::string;
 
@@ -53,7 +54,7 @@ public:
 	}
 	~TimeCount()
 	{
-
+		std::cout << getMircoSec() << std::endl;
 	}
 
 private:

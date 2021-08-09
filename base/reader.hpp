@@ -54,7 +54,6 @@ private:
 			_storager->get(&ssparam, request.header);
 			ss << response << ssparam.str().length() << "\r\n\r\n" << ssparam.str();
 			request.connect->Write(ss.str());
-			std::cout << t.getMircoSec() << std::endl;
 			_queue.pop();
 			ss.str("");
 			ssparam.str("");

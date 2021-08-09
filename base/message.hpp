@@ -84,9 +84,13 @@ std::ostream& operator << (std::ostream& os,const Timestamp& t)
 class message
 {
 public:
-	message(){}
+	message():_len(0){}
 	~message() {}
-	int length() { return _len; }
+	int length() 
+	{
+		if (!_len)  _len = sizeof(size_t) * 2 + _topic.length() + _timestamp.length + _context.length(); 
+		return _len; 
+	}
 	
 	message(const string& timestamp, const string& topic, const string& context)
 		:_timestamp(timestamp),

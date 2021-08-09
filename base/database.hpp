@@ -6,6 +6,7 @@
 #include "memtable.hpp"
 #include "mq.hpp"
 #include "metadata.hpp"
+#include "threadpool.hpp"
 #include "../net/HttpHeader.hpp"
 using std::vector;
 using std::mutex;
@@ -17,7 +18,7 @@ class database:noncopyable
 {
 public:
 	database(const string& filename = "log")
-		:_filenum(1),_tempnum(0), _tempnow(0),_filename(Filepath + filename), _lastmems(nullptr), _tables(100)
+		:_filenum(1), _tempnum(0), _tempnow(0), _filename(Filepath + filename), _lastmems(nullptr), _tables(100), _threadPool(4)
 	{
 		
 	}
@@ -30,6 +31,7 @@ protected:
 	void startflush();
 	void resetmem();
 	void clearTemp();
+
 
 	virtual void restart() = 0;
 	virtual void push_cache(memtable*) = 0;
@@ -50,6 +52,7 @@ protected:
 	mutex _insertmutex;
 	metadata _metadata;
 	mq<memtable*> _tables;
+	ThreadPool _threadPool;
 };
 
 
@@ -66,31 +69,27 @@ void database::start()
 
 void database::startflush()
 {
-	_thread = new thread(std::bind(&database::flush, this));
-	_thread->detach();
+	//_thread = new thread(std::bind(&database::flush, this));
+	//_thread->detach();
 }
 
 void database::flush()
 {
-	while (1)
+	memtable* table = _tables.front();
+	table->flush();
+	push_cache(table);
 	{
-		_sem.wait();
-		memtable* table = _tables.front();
-		table->flush();
-		push_cache(table);
+		std::lock_guard<mutex> lock(_findmutex);
+		_metadata.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
 		{
-			std::lock_guard<mutex> lock(_findmutex);
-			_metadata.push_back(new logfile(table->name(), table->min_time(), table->max_time()));
-			{
-				if (_lastmems == table) 
-				_lastmems = nullptr;
-			}
+			if (_lastmems == table) 
+			_lastmems = nullptr;
 		}
-		delete table;
-		_tables.pop();
-		_tempnum--;
-		clearTemp();
 	}
+	delete table;
+	_tables.pop();
+	_tempnum--;
+	clearTemp();
 }
 
 void database::clearTemp()
@@ -109,22 +108,40 @@ void database::clearTemp()
 
 int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 {
-	matcher match(header->searchkey);
 	message start(header->begin, header->topic, "");
 	message end(header->end, header->topic, "");
 	int num = header->num;
+	if (num > MaxFindNum) num = MaxFindNum;
+	matcher match(header->searchkey,num);
 	int ret = 0;
 	match.setStringstream(ss);
-	if (num > MaxFindNum) num = MaxFindNum;
 	std::lock_guard<mutex> lock(_findmutex);
-	for (auto it = _metadata.begin(); it != _metadata.end(); it++)
-		if ((*it)->min_time() > end._timestamp || (*it)->max_time() < start._timestamp)
-			continue;
-		else 
+	if (header->searchkey == "")
+	{
+		for (auto it = _metadata.begin(); it != _metadata.end(); it++)
+			if ((*it)->min_time() > end._timestamp || (*it)->max_time() < start._timestamp)
+				continue;
+			else
+			{
+				ret += get_from_file(&match, *it, start, end, num - ret);
+				if (ret >= num || match.size() <= 0) return ret;
+			}
+	}
+	else
+	{
+		std::vector<std::future<int>> results;
+		for (auto it = _metadata.begin(); it != _metadata.end(); it++)
+			if ((*it)->min_time() > end._timestamp || (*it)->max_time() < start._timestamp)
+				continue;
+			else
+			{
+				results.emplace_back(_threadPool.enqueue(std::bind(&database::get_from_file, this, &match, *it, start, end, num - ret)));
+			}
+		for (auto&& result : results)
 		{
-			ret += get_from_file(&match, *it, start, end, num - ret);
-			if (ret >= num || match.size() <= 0) return ret;
+				ret += result.get();
 		}
+	}
 	{
 		std::lock_guard<mutex> lock(_insertmutex);
 		if (ret >= num || match.size() <= 0) return ret;
@@ -159,5 +176,5 @@ void database::resetmem()
 		_lastmems = _mems;
 		_mems = createMemtable();
 	}
-	_sem.wakeup();
+	_threadPool.enqueue(std::bind(&database::flush,this));
 }

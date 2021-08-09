@@ -4,12 +4,14 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <mutex>
 #include "noncopyable.hpp"
 #include "message.hpp"
 
 using std::string;
 using std::priority_queue;
 using std::pair;
+using std::mutex;
 using std::vector;
 using std::queue;
 using std::stringstream;
@@ -29,6 +31,7 @@ public:
 	matcher(string key = "",int size = MatchTimes)
         :_size(size)
 	{
+       // if (key != "") _size = std::min(size,MatchTimes);
         autoAcNode newNode;
         _autoAc.emplace_back(newNode);
         for (auto begin = key.begin(); begin < key.end(); )
@@ -42,7 +45,7 @@ public:
 	}
 	~matcher()
     {
-        if (_size <= 0) *_ss << "next start time :" << _lasttime << "\n";
+       // if (_size <= 0) *_ss << "next start time :" << _lasttime << "\n";
     }
     int size() { return _size;}
     void setStringstream(stringstream* ss){_ss = ss;}
@@ -88,7 +91,7 @@ public:
     }
     int match(const message& m) {
         int p = 0, repeat = 0;
-        _size--;
+        if (_size <= 0) return 0;
         if (_autoAc.size() > 1)
             for (int i = 0; i < m._context.length(); i++)
             {
@@ -102,12 +105,10 @@ public:
             }
         else 
             repeat = 1;
-        if (_size <= 0)
-        {
-            _lasttime = m._timestamp;
-        }
         if (repeat > 0) 
         {
+            std::lock_guard<mutex> _lock(_mutex);
+            _size--;
             *_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
             return 1;
         }
@@ -118,6 +119,7 @@ private:
     int _cnt;
     int _size;
     stringstream* _ss;
-    Timestamp _lasttime;
+    mutex _mutex;
+   // Timestamp _lasttime;
     vector<autoAcNode> _autoAc;
 };

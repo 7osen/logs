@@ -13,6 +13,7 @@ struct Block
 		:topic(top),timestamp(time),offset(offs)
 	{
 	}
+
 	Block(){}
 	~Block(){}
 };
