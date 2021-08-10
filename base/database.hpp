@@ -121,7 +121,7 @@ int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 	int ret = 0;
 	match.setStringstream(ss);
 	std::lock_guard<mutex> lock(_findmutex);
-	/*if (header->searchkey == "")
+	if (header->searchkey == "")
 	{
 		for (auto it = _metadata.begin(); it != _metadata.end(); it++)
 			if ((*it)->min_time() > end._timestamp || (*it)->max_time() < start._timestamp)
@@ -132,7 +132,7 @@ int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 				if (ret >= num || match.size() <= 0) return ret;
 			}
 	}
-	else*/
+	else
 	{
 		std::vector<std::future<int>> results;
 		for (auto it = _metadata.begin(); it != _metadata.end(); it++)

@@ -34,7 +34,7 @@ string getst(long long t)
 
 void storager_test()
 {
-	database* s = new plainDatabase();
+	database* s = new blockDatabase();
 	s->start();
 	TimeCount t;
 	t.Update();
