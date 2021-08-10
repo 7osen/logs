@@ -29,7 +29,7 @@ public:
 		while (!_tail.compare_exchange_weak(old, next))
 		{
 			next = (old + 1) % _size;
-			while (next == _head) std::this_thread::sleep_for(std::chrono::milliseconds(1));;
+			while (next == _head) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		_queue[old] = val;
 		_valid[old] = true;

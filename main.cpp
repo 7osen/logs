@@ -25,12 +25,9 @@ void cmd(LogServer* l)
 string getst(long long t)
 {
 	string st = "";
-	for (int i = 1; i <= 4; i++)
+	for (int i = 1; i <= 8; i++)
 	{
-		t = (t + 1) << 6;
-		st += (t % 26 + 'a');
-		t =  (t-1) >> 5;
-		st += (t % 26 + 'a');
+		st += (rand() % 26 + 'a');
 	}
 	return st;
 }
@@ -45,7 +42,7 @@ void storager_test()
 	for (;;)
 	{
 		Timestamp t1(getTimenow());
-		message m(t1,"topic" + to_string(t1.microseconds%1000), getst(t1.hour_min_sec*t1.microseconds));
+		message m(t1,"topic" + to_string(t1.microseconds%10), getst(t1.hour_min_sec*t1.microseconds));
 		for (int i = 1; i <= 1; i++)
 		{
 		//	message m(getTimenow(), "t", "dasf");
@@ -78,8 +75,7 @@ void server_test()
 
 int main()
 {
-
-	//server_test();
-	gdata();
+	server_test();
+	//gdata();
 
 }	

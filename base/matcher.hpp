@@ -36,16 +36,17 @@ public:
         _autoAc.emplace_back(newNode);
         for (auto begin = key.begin(); begin < key.end(); )
         {
-            auto next = std::find(begin, key.end(), '|');
+            auto next = std::find(begin, key.end(), '%');
             build(string(begin, next));
             next++;
-            begin = next;
+            begin = next + 2;
         }
         fail();
 	}
 	~matcher()
     {
-       // if (_size <= 0) *_ss << "next start time :" << _lasttime << "\n";
+        for (auto it = _s.begin();it!=_s.end();it = it->_forward[0])
+        *_ss << "[" << it->key._timestamp << "] [" << it->key._topic << "]: " << it->key._context << "\n";
     }
     int size() { return _size;}
     void setStringstream(stringstream* ss){_ss = ss;}
@@ -109,7 +110,8 @@ public:
         {
             std::lock_guard<mutex> _lock(_mutex);
             _size--;
-            *_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
+            _s.push_back(m, 0);
+            //*_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
             return 1;
         }
         return 0;
@@ -121,5 +123,6 @@ private:
     stringstream* _ss;
     mutex _mutex;
    // Timestamp _lasttime;
+    SkipList<message,int> _s;
     vector<autoAcNode> _autoAc;
 };

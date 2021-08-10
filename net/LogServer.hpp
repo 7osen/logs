@@ -27,7 +27,7 @@ public:
 		_writer->start();
 		_reader->start();
 		_storager->start();
-		_server.setPostCallBack(std::bind(&LogServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
+		_server.setPostCallBack(std::bind(&LogServer::write, this, std::placeholders::_1, std::placeholders::_2));
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
@@ -36,7 +36,7 @@ public:
 	void close(){_server.close();}
 
 private:
-	void onMessage(char* begin, char* end);
+	void write(char* begin, char* end);
 	void find(Connect* conn, shared_ptr<httpHeader> header) {_reader->query(conn, header);}
 	//bool strcmp(char* ch, int len, const char* src)
 	//{
@@ -53,7 +53,7 @@ private:
 	HttpServer _server;
 };
 
-void LogServer::onMessage(char* begin, char* end)
+void LogServer::write(char* begin, char* end)
 {
 	string timestamp, topic, context;
 	char* mid = std::find(begin, end, '=');
