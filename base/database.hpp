@@ -161,8 +161,9 @@ int database::get(std::stringstream* ss, shared_ptr<httpHeader> header)
 void database::set(const message& m)
 {
 	_mems->set(m);
-	_tempfile->Write(m._timestamp, m._topic, m._context);
-	_tempfile->flush();
+	_tempfile->Write(m);
+//	_tempfile->Write(m._timestamp, m._topic, m._context);
+//	_tempfile->flush();
 	if (_tempfile->writePos() > MaxFileSize)
 	{
 		_tempfile->close();

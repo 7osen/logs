@@ -76,7 +76,7 @@ void server_test()
 
 int main()
 {
-	//server_test();
-	gdata();
+	server_test();
+	//gdata();
 
 }	

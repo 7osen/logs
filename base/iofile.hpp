@@ -47,6 +47,9 @@ public:
 	void Write(const T&);
 
 	template<typename T>
+	void Set(const T&);
+
+	template<typename T>
 	void Read(T&);
 
 	template<typename T>
@@ -79,16 +82,61 @@ void iofile::flush()
 	}
 }
 
+
 template<>
-void iofile::Write(const int& num)
+void iofile::Set(const size_t& num)
+{
+	add((char*)&num, sizeof(size_t));
+
+}
+
+template<>
+void iofile::Set(const int& num)
 {
 	add((char*)&num, sizeof(int));
 }
 
 template<>
+void iofile::Set(const string& st)
+{
+	Set(st.length());
+	add(st.c_str(), st.length());
+	//_file << st;
+}
+
+template<>
+void iofile::Set(const Timestamp& t)
+{
+	Set(t.day);
+	Set(t.hour_min_sec);
+	Set(t.microseconds);
+}
+
+template<typename T>
+void Set(const T& value)
+{
+	std::cout << "Invalid param : " << value << std::endl;
+}
+
+
+template<>
+void iofile::Write(const message& m)
+{
+	Set(m._timestamp);
+	Set(m._topic);
+	Set(m._context);
+}
+
+template<>
+void iofile::Write(const int& num)
+{
+	_file.write((char*)&num, sizeof(int));
+}
+
+template<>
 void iofile::Write(const size_t& num)
 {
-	add((char*)&num, sizeof(size_t));
+	_file.write((char*)&num, sizeof(size_t));
 	
 }
 
@@ -96,8 +144,8 @@ template<>
 void iofile::Write(const string& st)
 {
 	Write(st.length());
-	add(st.c_str(), st.length());
-		//_file << st;
+	//add(st.c_str(), st.length());
+	_file << st;
 }
 
 template<>
