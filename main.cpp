@@ -25,7 +25,8 @@ void cmd(LogServer* l)
 string getst(long long t)
 {
 	string st = "";
-	for (int i = 1; i <= 8; i++)
+	int l = rand() % 32;
+	for (int i = 1; i <= l; i++)
 	{
 		st += (rand() % 26 + 'a');
 	}
@@ -75,7 +76,7 @@ void server_test()
 
 int main()
 {
-	server_test();
-	//gdata();
+	//server_test();
+	gdata();
 
 }	

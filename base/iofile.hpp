@@ -19,7 +19,7 @@ class iofile: noncopyable
 {
 public:
 	iofile(string filename, std::_Ios_Openmode flag = ios::app)
-		:_filename(filename) , _times(0)
+		:_filename(filename) , _times(0), _buffer()
 	{
 		_file.open(filename, ios::in | ios::out | ios::binary | flag);
 	}
@@ -52,6 +52,17 @@ public:
 	template<typename T>
 	ostream& operator << (T t){return _file << t;}
 private:
+	void add(const char* ch, int n)
+	{
+		if (_buffer.availWrite() > n)
+		{
+			_file.write(_buffer.begin(), _buffer.availRead());
+			_buffer.eat(_buffer.availRead());
+			_buffer.reset();
+		}
+		_buffer.write(ch, n);
+	}
+
 	int _times;
 	string _filename;
 	fstream _file;
@@ -63,7 +74,7 @@ void iofile::flush()
 	_times++;
 	if (_times >= EveryFlush)
 	{
-		_file.flush();
+	//	_file.flush();
 		_times = 0;
 	}
 }
@@ -71,13 +82,13 @@ void iofile::flush()
 template<>
 void iofile::Write(const int& num)
 {
-	_file.write((char*)&num, sizeof(int));
+	add((char*)&num, sizeof(int));
 }
 
 template<>
 void iofile::Write(const size_t& num)
 {
-	_file.write((char*)&num, sizeof(size_t));
+	add((char*)&num, sizeof(size_t));
 	
 }
 
@@ -85,7 +96,8 @@ template<>
 void iofile::Write(const string& st)
 {
 	Write(st.length());
-	_file << st;
+	add(st.c_str(), st.length());
+		//_file << st;
 }
 
 template<>

@@ -18,7 +18,7 @@ public:
 	void reset();
 	char* end(){return _data + _Writepos;}
 	char* begin(){return _data + _Readpos;}
-	void write(char* ch, int n)
+	void write(const char* ch, int n)
 	{
 		memcpy(_data + _Writepos, ch, n);
 		_Writepos += n;
@@ -43,7 +43,6 @@ ssize_t Buffer::readFD(int fd)
 
 void Buffer::reset()
 {
-	if (!availRead()) return;
 	memcpy(_data, _data + _Readpos, availRead());
 	_Writepos = availRead();
 	_Readpos = 0;
