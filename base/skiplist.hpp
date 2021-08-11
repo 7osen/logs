@@ -61,7 +61,7 @@ template<typename K, typename V>
 SkipList<K, V>::SkipList()
 {
 
-    this->_max_level = 100 ;
+    this->_max_level = 32;
     this->_skip_list_level = 0;
     this->_element_count = 0;
     this->_header = new Node<K, V>(_max_level);
