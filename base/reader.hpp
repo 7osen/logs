@@ -21,7 +21,7 @@ class reader
 {
 public:
 	reader(database* st)
-		:_storager(st),_queue(10)
+		:_db(st),_queue(10)
 	{}
 
 	void query(Connect* conn, shared_ptr<httpHeader> header)
@@ -51,7 +51,7 @@ private:
 			searchRequest request = _queue.front();
 			TimeCount t;
 			t.Update();
-			_storager->get(&ssparam, request.header);
+			_db->get(&ssparam, request.header);
 			ss << response << ssparam.str().length() << "\r\n\r\n" << ssparam.str();
 			request.connect->Write(ss.str());
 			_queue.pop();
@@ -60,7 +60,7 @@ private:
 		}
 	}
 
-	database* _storager;
+	database* _db;
 	thread* _searcherThread;
 	mq<searchRequest> _queue;
 	semaphore _s;

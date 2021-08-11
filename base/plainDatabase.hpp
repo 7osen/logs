@@ -17,10 +17,8 @@ private:
 	{
 		return new plainmemtable(getTimenow());
 	}
-	void push_cache(memtable*)
-	{}
-	void restart()
-	{}
+	void push_cache(memtable*){}
+	void restart(){}
 	int get_from_file(matcher* match, logfile* file, const message& start_time, const message& end_time, int num)
 	{
 		iofile log(file->datafilename());

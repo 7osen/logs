@@ -8,7 +8,7 @@ class writer:noncopyable
 {
 public:
 	writer(database* st)
-		:_storager(st),_queue(new mq<message>(QUEUE_LENGTH))
+		:_db(st),_queue(new mq<message>(QUEUE_LENGTH))
 	{
 
 	}
@@ -37,7 +37,7 @@ private:
 		t.Update();
 		while (1)
 		{
-			_storager->set(_queue->front());
+			_db->set(_queue->front());
 			count++;
 			if (t.getSecond() > 1.0)
 			{
@@ -49,7 +49,7 @@ private:
 		}
 	}
 
-	database* _storager;
+	database* _db;
 	thread* _writerThread;
 	mq<message>* _queue;
 };

@@ -13,6 +13,7 @@ using std::mutex;
 using std::thread;
 using std::to_string;
 
+const long MaxFileSize = 1024 * 1024 * 1024;
 
 class database:noncopyable
 {
@@ -43,16 +44,16 @@ protected:
 	int _tempnow;
 	int _tempnum;
 	iofile* _tempfile;
+	thread* _thread;
 	memtable* _mems;
 	memtable* _lastmems;
-	string _filename;
-	semaphore _sem;
-	thread* _thread;
 	mutex _findmutex;
 	mutex _insertmutex;
+	string _filename;
+	semaphore _sem;
 	metadata _metadata;
-	mq<memtable*> _tables;
 	ThreadPool _threadPool;
+	mq<memtable*> _tables;
 };
 
 
@@ -162,8 +163,6 @@ void database::set(const message& m)
 {
 	_mems->set(m);
 	_tempfile->Write(m);
-//	_tempfile->Write(m._timestamp, m._topic, m._context);
-//	_tempfile->flush();
 	if (_tempfile->writePos() > MaxFileSize)
 	{
 		_tempfile->close();
@@ -183,5 +182,4 @@ void database::resetmem()
 		_mems = createMemtable();
 	}
 	_sem.wakeup();
-
 }

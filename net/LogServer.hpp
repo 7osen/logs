@@ -21,37 +21,36 @@ public:
 		:_server(port, threadnums)
 	{
 
-		_storager = new blockDatabase();
-		_writer = new writer(_storager);
-		_reader = new reader(_storager);
-		_writer->start();
-		_reader->start();
-		_storager->start();
+		_db = new blockDatabase();
+		_writer = new writer(_db);
+		_reader = new reader(_db);
 		_server.setPostCallBack(std::bind(&LogServer::write, this, std::placeholders::_1, std::placeholders::_2));
 		_server.setGetCallBack(std::bind(&LogServer::find, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
-	~LogServer() {delete _storager;}
-	void start(){_server.start();}
+	~LogServer() {delete _db;}
+	void start();
 	void close(){_server.close();}
 
 private:
 	void write(char* begin, char* end);
 	void find(Connect* conn, shared_ptr<httpHeader> header) {_reader->query(conn, header);}
-	//bool strcmp(char* ch, int len, const char* src)
-	//{
-	//	for (int i = 0; i < len; i++)
-	//	{
-	//		if (ch[i] != src[i]) return false;
-	//	}
-	//	return true;
-	//}
-	database* _storager;
+
+	database* _db;
 	writer* _writer;
 	reader* _reader;
 	std::thread* _writerThread;
 	HttpServer _server;
 };
+
+
+void LogServer::start()
+{
+	_writer->start();
+	_reader->start();
+	_db->start();
+	_server.start();
+}
 
 void LogServer::write(char* begin, char* end)
 {

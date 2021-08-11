@@ -74,12 +74,7 @@ private:
 
 void iofile::flush()
 {
-	_times++;
-	if (_times >= EveryFlush)
-	{
-	//	_file.flush();
-		_times = 0;
-	}
+	_file.flush();
 }
 
 

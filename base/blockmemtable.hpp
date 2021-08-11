@@ -4,6 +4,8 @@
 
 using std::shared_ptr;
 
+const int BlockSize = 16;
+
 struct Block
 {
 	string topic;

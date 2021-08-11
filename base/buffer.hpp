@@ -4,8 +4,9 @@
 #include <unistd.h>
 #include <string>
 #include <arpa/inet.h>
+#include "setting.hpp"
 
-const size_t BUFFER_SIZE = 409600;
+const size_t BUFFER_SIZE = 40960;
 
 class Buffer
 {

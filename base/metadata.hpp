@@ -9,6 +9,8 @@
 using std::vector;
 using std::string;
 
+const int MaxFileNum = 64;
+
 bool file_exists(const string& name) {
 	struct stat file;
 	return (stat(name.c_str(), &file) == 0);

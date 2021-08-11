@@ -41,10 +41,9 @@ private:
 	std::condition_variable _cv;
 
 	std::mutex _mutex;
+	int _wait;
 
-	std::atomic<int> _wait;
-
-	std::atomic<int> _wakeup;
+	int _wakeup;
 protected:
 
 };

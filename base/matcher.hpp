@@ -16,6 +16,12 @@ using std::vector;
 using std::queue;
 using std::stringstream;
 
+
+const int MatchTimes = 1 << 16;
+
+const int MaxFindNum = 1 << 20;
+
+
 struct autoAcNode {
     int num, sum, fail, tim, fa, next[256];
     autoAcNode()

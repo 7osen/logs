@@ -11,6 +11,8 @@ using std::pair;
 using std::make_pair;
 
 
+const int LruCacheSize = 24;
+
 
 template<typename Key,typename Value,typename Iter>
 class LRUCache

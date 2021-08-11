@@ -6,6 +6,8 @@
 #include "Epoller.hpp"
 
 
+const int MaxConnectNum = 4096;
+
 using std::mutex;
 
 class WorkerThread
@@ -89,7 +91,7 @@ void WorkerThread::run()
 {
 	_running = true;
 	vector<Connect*> activeChannels;
-	activeChannels.reserve(1024);
+	activeChannels.reserve(MaxConnectNum);
 	while (!_quit)
 	{
 		update();

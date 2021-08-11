@@ -17,7 +17,7 @@ class Epoller:noncopyable
 
 public:
 	Epoller(){_epfd = epoll_create(EPOLL_SIZE);}
-	~Epoller();
+	~Epoller(){}
 	void epoll(int timeous, vector<Connect*>* activeChannels);
 	void remove(Connect* channel);
 	void add(Connect* channel);
@@ -30,13 +30,6 @@ private:
 	map<int, Connect*> _channels;
 };
 
-Epoller::~Epoller()
-{
-	for (auto it : _channels)
-	{
-		delete it.second;
-	}
-}
 
 void Epoller::epoll(int timeous, vector<Connect*>* activeChannels)
 {
