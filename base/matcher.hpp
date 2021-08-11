@@ -22,6 +22,11 @@ const int MatchTimes = 1 << 16;
 const int MaxFindNum = 1 << 20;
 
 
+struct cmp
+{
+    bool operator()(const message& lhs, const message& rhs) { return rhs > lhs; }
+};
+
 struct autoAcNode {
     int num, sum, fail, tim, fa, next[256];
     autoAcNode()
@@ -129,6 +134,6 @@ private:
     stringstream* _ss;
     mutex _mutex;
    // Timestamp _lasttime;
-    SkipList<message,int> _s;
+    priority_queue<message, vector<message>, > _heap;
     vector<autoAcNode> _autoAc;
 };
