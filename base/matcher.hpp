@@ -24,7 +24,7 @@ const int MaxFindNum = 1 << 20;
 
 struct cmp
 {
-    bool operator()(const message& lhs, const message& rhs) { return rhs > lhs; }
+    bool operator()(const message& lhs, const message& rhs) { return lhs > rhs; }
 };
 
 struct autoAcNode {
@@ -56,8 +56,11 @@ public:
 	}
 	~matcher()
     {
-        for (auto it = _s.begin();it!=_s.end();it = it->_forward[0])
-        *_ss << "[" << it->key._timestamp << "] [" << it->key._topic << "]: " << it->key._context << "\n";
+        for (; !_heap.empty();)
+        {
+            *_ss << "[" << _heap.top()._timestamp << "] [" << _heap.top()._topic << "]: " << _heap.top()._context << "\n";
+            _heap.pop();
+        }
     }
     int size() { return _size;}
     void setStringstream(stringstream* ss){_ss = ss;}
@@ -121,7 +124,7 @@ public:
         {
             std::lock_guard<mutex> _lock(_mutex);
             _size--;
-            _s.push_back(m, 0);
+            _heap.push(m);
             //*_ss << "[" << m._timestamp << "] [" <<m._topic << "]: " << m._context << "\n";
             return 1;
         }
@@ -134,6 +137,6 @@ private:
     stringstream* _ss;
     mutex _mutex;
    // Timestamp _lasttime;
-    priority_queue<message, vector<message>, > _heap;
+    priority_queue<message, vector<message>, cmp> _heap;
     vector<autoAcNode> _autoAc;
 };
