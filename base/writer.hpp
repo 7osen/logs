@@ -39,12 +39,14 @@ private:
 		{
 			_db->set(_queue->front());
 			count++;
+			/*
 			if (t.getSecond() > 1.0)
 			{
 				printf("%d\n", count);
 				count = 0;
 				t.Update();
 			}
+			*/
 			_queue->pop();
 		}
 	}
