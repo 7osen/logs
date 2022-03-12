@@ -5,6 +5,6 @@
 
 int main()
 {
-	LogServer ls(8080, 4);
+	LogServer ls(8081, 2);
 	ls.start();
 }	
