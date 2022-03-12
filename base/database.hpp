@@ -13,7 +13,7 @@ using std::mutex;
 using std::thread;
 using std::to_string;
 
-const long MaxFileSize = 1024 * 1024 * 1024;
+const long MaxFileSize = 1024 * 1024 * 128;
 
 class database:noncopyable
 {
