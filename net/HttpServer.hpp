@@ -7,7 +7,7 @@ using std::stringstream;
 using std::shared_ptr;
 
 const string NotContent = "HTTP/1.1 204 NotContent\r\n\r\n";
-const string response = "HTTP/1.1 200 OK\r\nContent-Length: ";
+const string response = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: ";
 
 class HttpServer:noncopyable
 {
