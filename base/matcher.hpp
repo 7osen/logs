@@ -58,7 +58,7 @@ public:
     {
         for (; !_heap.empty();)
         {
-            *_ss << "[" << _heap.top()._timestamp << "] [" << _heap.top()._topic << "]: " << _heap.top()._context << "\n";
+            *_ss << "<p>[" << _heap.top()._timestamp << "] [" << _heap.top()._topic << "]: " << _heap.top()._context << "</p>";
             _heap.pop();
         }
     }

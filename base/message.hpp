@@ -6,7 +6,7 @@
 using std::string;
 
 
-//example:20210804-11:28:40-710313
+//example:2021-08-04-11:28:40-710313
 struct Timestamp
 {
 	int day;
@@ -22,11 +22,16 @@ struct Timestamp
 		:day(0), hour(0), min(0), sec(0), microseconds(0), hour_min_sec(0)
 	{
 		int l = st.length();
-		for (int i = 0; i < 8 && i < l; i++) day = day * 10 + (st[i] - '0');
-		for (int i = 9; i < 11 && i < l; i++) hour = hour * 10 + (st[i] - '0');
-		for (int i = 12; i < 14 && i < l; i++) min = min * 10 + (st[i] - '0');
-		for (int i = 15; i < 17 && i < l; i++) sec = sec * 10 + (st[i] - '0');
-		for (int i = 18;  i < l; i++) microseconds = microseconds * 10 + (st[i] - '0');
+		int i = 0;
+		int year = 0,month = 0;
+		for (i = 0; i < 4 && i < l && st[i] != '-'; i++) year = year * 10 + (st[i] - '0');i++;
+		for (; i < 6 && i < l && st[i] != '-'; i++) month = month * 10 + (st[i] - '0');i++;
+		for (; i < 8 && i < l && st[i] != '-'; i++) day = day * 10 + (st[i] - '0');i++;
+		for (; i < 11 && i < l && st[i] != '-' && st[i] != ':'; i++) hour = hour * 10 + (st[i] - '0'); i++;
+		for (; i < 14 && i < l && st[i] != '-' && st[i] != ':'; i++) min = min * 10 + (st[i] - '0'); i++;
+		for (; i < 17 && i < l && st[i] != '-' && st[i] != ':'; i++) sec = sec * 10 + (st[i] - '0'); i++;
+		for (;  i < l && st[i] != '-' && st[i] != ':'; i++) microseconds = microseconds * 10 + (st[i] - '0');i++;
+		day += year * 10000 + month * 100;
 		hour_min_sec = hour * 10000 + min * 100 + sec;
 	}
 
