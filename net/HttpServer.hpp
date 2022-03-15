@@ -6,7 +6,7 @@
 using std::stringstream;
 using std::shared_ptr;
 
-const string NotContent = "HTTP/1.1 204 NotContent\r\n\r\n";
+const string NotContent = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nAllow: GET,HEAD,POST\r\nAccess-Control-Allow-Headers: Content-Type,Content-Length\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 13\r\n\r\nGET,HEAD,POST";
 const string response = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: ";
 
 class HttpServer:noncopyable
@@ -59,6 +59,10 @@ void HttpServer::onMessage(Connect* conn, Buffer* buf)
 			{
 				if (_GetCallBack)
 					_GetCallBack(conn, header);
+			}
+			else if (header->method() == HttpMethod::OPTIONS)
+			{
+				conn->Write_Dontwait(NotContent.c_str(), NotContent.length());
 			}
 			buf->eat(dataLength);
 		}

@@ -20,7 +20,8 @@ enum HttpMethod
 	ERROR = 0,
 	GET = 1,
 	POST = 2,
-	PUT = 3
+	PUT = 3,
+	OPTIONS = 4
 };
 
 class httpHeader
@@ -75,6 +76,10 @@ void httpHeader::getMethod()
 	else if (Method == "PUT")
 	{
 		_method = HttpMethod::PUT;
+	}
+	else if (Method == "OPTIONS")
+	{
+		_method = HttpMethod::OPTIONS;
 	}
 	else
 	{
