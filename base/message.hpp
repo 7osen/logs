@@ -23,14 +23,14 @@ struct Timestamp
 	{
 		int l = st.length();
 		int i = 0;
-		int year = 0,month = 0;
-		for (i = 0; i < 4 && i < l && st[i] != '-'; i++) year = year * 10 + (st[i] - '0');i++;
-		for (; i < 6 && i < l && st[i] != '-'; i++) month = month * 10 + (st[i] - '0');i++;
-		for (; i < 8 && i < l && st[i] != '-'; i++) day = day * 10 + (st[i] - '0');i++;
-		for (; i < 11 && i < l && st[i] != '-' && st[i] != ':'; i++) hour = hour * 10 + (st[i] - '0'); i++;
-		for (; i < 14 && i < l && st[i] != '-' && st[i] != ':'; i++) min = min * 10 + (st[i] - '0'); i++;
-		for (; i < 17 && i < l && st[i] != '-' && st[i] != ':'; i++) sec = sec * 10 + (st[i] - '0'); i++;
-		for (;  i < l && st[i] != '-' && st[i] != ':'; i++) microseconds = microseconds * 10 + (st[i] - '0');i++;
+		int year = 0, month = 0;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) year = year * 10 + (st[i] - '0'); i++;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) month = month * 10 + (st[i] - '0'); i++;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) day = day * 10 + (st[i] - '0'); i++;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) hour = hour * 10 + (st[i] - '0'); i++;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) min = min * 10 + (st[i] - '0'); i++;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) sec = sec * 10 + (st[i] - '0'); i++;
+		for (; i < l && st[i] != '-' && st[i] != ':'; i++) microseconds = microseconds * 10 + (st[i] - '0'); i++;
 		day += year * 10000 + month * 100;
 		hour_min_sec = hour * 10000 + min * 100 + sec;
 	}
